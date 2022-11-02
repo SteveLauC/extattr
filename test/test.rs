@@ -244,15 +244,10 @@ mod test_linux_android_netbsd {
     }
 }
 
-
 #[cfg(test)]
 #[cfg(any(target_os = "freebsd", target_os = "netbsd"))]
-mod test_freebsd_netbsd {
-
-}
+mod test_freebsd_netbsd {}
 
 #[cfg(test)]
 #[cfg(any(target_os = "macos", target_os = "ios"))]
-mod test_darwin {
-
-}
+mod test_darwin {}

@@ -29,5 +29,5 @@ libc = {version = "0.2.137", default-features=false}
 tempfile = "3.3.0"
 
 [[test]]
-name = "linux_and_android"
-path = "test/linux_and_android.rs"
+name = "test"
+path = "test/test.rs"

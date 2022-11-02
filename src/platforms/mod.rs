@@ -1,4 +1,4 @@
-#[cfg(any(target_os = "freebsd", target_os="netbsd"))]
+#[cfg(any(target_os = "freebsd", target_os = "netbsd"))]
 pub mod freebsd;
 
 #[cfg(any(target_os = "linux", target_os = "android", target_os = "netbsd"))]

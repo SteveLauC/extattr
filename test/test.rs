@@ -246,7 +246,236 @@ mod test_linux_android_netbsd {
 
 #[cfg(test)]
 #[cfg(any(target_os = "freebsd", target_os = "netbsd"))]
-mod test_freebsd_netbsd {}
+mod test_freebsd_netbsd {
+    use errno::Errno;
+    use extattr::{
+        extattr_delete_fd, extattr_delete_file, extattr_get_fd,
+        extattr_get_file, extattr_list_fd, extattr_list_file, extattr_set_fd,
+        extattr_set_file, AttrNamespace,
+    };
+    use std::{fs::File, os::unix::io::AsRawFd};
+
+    #[test]
+    fn test_extattr_set_file_file_exist() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path =
+            temp_dir.path().join("test_extattr_set_file_file_exist");
+        File::create(temp_file_path.as_path()).unwrap();
+
+        extattr_set_file(
+            temp_file_path.as_path(),
+            AttrNamespace::EXTATTR_NAMESPACE_USER,
+            "test_extattr_set_file_file_exist",
+            "",
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn test_extattr_set_file_file_not_exist() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path =
+            temp_dir.path().join("test_extattr_set_file_file_not_exist");
+
+        assert_eq!(
+            extattr_set_file(
+                temp_file_path.as_path(),
+                AttrNamespace::EXTATTR_NAMESPACE_USER,
+                "test_extattr_set_file_file_not_exist",
+                "",
+            ),
+            Err(Errno(libc::ENOENT))
+        );
+    }
+
+    #[test]
+    fn test_extattr_set_fd() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path = temp_dir.path().join("test_extattr_set_fd");
+        let temp_file = File::create(temp_file_path.as_path()).unwrap();
+        let temp_file_fd = temp_file.as_raw_fd();
+
+        extattr_set_fd(
+            temp_file_fd,
+            AttrNamespace::EXTATTR_NAMESPACE_USER,
+            "test_extattr_set_fd",
+            "",
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn test_extattr_list_file() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path = temp_dir.path().join("test_extattr_list_file");
+        File::create(temp_file_path.as_path()).unwrap();
+
+        extattr_list_file(
+            temp_file_path.as_path(),
+            AttrNamespace::EXTATTR_NAMESPACE_USER,
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn test_flistxattr() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path = temp_dir.path().join("test_flistxattr");
+        let temp_file = File::create(temp_file_path.as_path()).unwrap();
+        let temp_file_fd = temp_file.as_raw_fd();
+
+        extattr_list_fd(temp_file_fd, AttrNamespace::EXTATTR_NAMESPACE_USER)
+            .unwrap();
+    }
+
+    #[test]
+    fn test_extattr_get_file() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path = temp_dir.path().join("test_extattr_get_file");
+        File::create(temp_file_path.as_path()).unwrap();
+
+        extattr_set_file(
+            temp_file_path.as_path(),
+            AttrNamespace::EXTATTR_NAMESPACE_USER,
+            "test_extattr_get_file",
+            "",
+        )
+        .unwrap();
+
+        assert_eq!(
+            Ok(Vec::new()),
+            extattr_get_file(
+                temp_file_path.as_path(),
+                AttrNamespace::EXTATTR_NAMESPACE_USER,
+                "test_extattr_get_file"
+            )
+        );
+    }
+
+    #[test]
+    fn test_extattr_get_fd() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path = temp_dir.path().join("test_extattr_get_fd");
+        let temp_file = File::create(temp_file_path.as_path()).unwrap();
+        let temp_file_fd = temp_file.as_raw_fd();
+
+        extattr_set_fd(
+            temp_file_fd,
+            AttrNamespace::EXTATTR_NAMESPACE_USER,
+            "test_extattr_get_fd",
+            "",
+        )
+        .unwrap();
+
+        assert_eq!(
+            Ok(Vec::new()),
+            extattr_get_fd(
+                temp_file_fd,
+                AttrNamespace::EXTATTR_NAMESPACE_USER,
+                "test_extattr_get_fd"
+            )
+        );
+    }
+
+    /// call `extattr_get_file()` on a file that does not exist, return `ENOENT`
+    #[test]
+    fn test_extattr_get_file_file_not_exist() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path =
+            temp_dir.path().join("test_extattr_get_file_file_not_exist");
+
+        assert_eq!(
+            extattr_get_file(
+                temp_file_path,
+                AttrNamespace::EXTATTR_NAMESPACE_USER,
+                "test_extattr_get_file_file_not_exist",
+            ),
+            Err(Errno(libc::ENOENT))
+        );
+    }
+
+    ///  call `extattr_get_file()` to query the `SYSTEM` EA, only user with
+    /// privilege is allowed to do this, we will get `EPERM`.
+    #[test]
+    fn test_extattr_get_file_permission_denied() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path =
+            temp_dir.path().join("test_extattr_get_file_file_not_exist");
+        let _temp_file = File::create(temp_file_path.as_path()).unwrap();
+
+        assert_eq!(
+            extattr_get_file(
+                temp_file_path.as_path(),
+                AttrNamespace::EXTATTR_NAMESPACE_SYSTEM,
+                "test_extattr_get_file_permission_denied",
+            ),
+            Err(Errno(libc::EPERM))
+        );
+    }
+
+    #[test]
+    fn test_extattr_delete_file_ea_exist() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path =
+            temp_dir.path().join("test_extattr_delete_file_ea_exist");
+        File::create(temp_file_path.as_path()).unwrap();
+
+        let res = extattr_set_file(
+            temp_file_path.as_path(),
+            AttrNamespace::EXTATTR_NAMESPACE_USER,
+            "test_extattr_delete_file_ea_exist",
+            "",
+        );
+
+        extattr_delete_file(
+            temp_file_path.as_path(),
+            AttrNamespace::EXTATTR_NAMESPACE_USER,
+            "test_extattr_delete_file_ea_exist",
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn test_extattr_delete_file_ea_not_exist() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path = temp_dir
+            .path()
+            .join("test_extattr_delete_file_ea_not_exist");
+        File::create(temp_file_path.as_path()).unwrap();
+
+        assert_eq!(
+            extattr_delete_file(
+                temp_file_path.as_path(),
+                AttrNamespace::EXTATTR_NAMESPACE_USER,
+                "test_extattr_delete_file_ea_not_exist",
+            ),
+            Err(Errno(libc::ENOATTR))
+        );
+    }
+
+    #[test]
+    fn test_extattr_delete_fd() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path = temp_dir.path().join("test_extattr_delete_fd");
+        let temp_file = File::create(temp_file_path.as_path()).unwrap();
+        let temp_file_fd = temp_file.as_raw_fd();
+
+        extattr_set_fd(
+            temp_file_fd,
+            AttrNamespace::EXTATTR_NAMESPACE_USER,
+            "test_extattr_delete_fd",
+            "",
+        )
+        .unwrap();
+
+        assert!(extattr_delete_fd(
+            temp_file_fd,
+            AttrNamespace::EXTATTR_NAMESPACE_USER,
+            "test_extattr_delete_fd"
+        )
+        .is_ok());
+    }
+}
 
 #[cfg(test)]
 #[cfg(any(target_os = "macos", target_os = "ios"))]

@@ -1,15 +1,43 @@
-container:
-  image: rust:latest
+task:
+  name: stable x86_64-unknown-freebsd-12
+  freebsd_instance:
+    image: freebsd-12-3-release-amd64
+  setup_script:
+    - pkg install -y curl
+    - curl https://sh.rustup.rs -sSf --output rustup.sh
+    - sh rustup.sh -y
+    - . $HOME/.cargo/env
+  test_script:
+    - . $HOME/.cargo/env
+    - cargo build --verbose
+    - cargo clippy --verbose
+    - cargo test --verbose
 
-test_task:
-  registry_cache:
-    folder: $CARGO_HOME/registry
-    fingerprint_script: cat Cargo.lock
-  target_cache:
-    folder: target
-    fingerprint_script:
-      - rustc --version
-      - cat Cargo.lock
-  build_script: cargo build
-  test_script: cargo test
-  before_cache_script: rm -rf $CARGO_HOME/registry/index
+task:
+  name: stable x86_64-unknown-freebsd-13
+  freebsd_instance:
+    image: freebsd-13-1-release-amd64
+  setup_script:
+    - pkg install -y curl
+    - curl https://sh.rustup.rs -sSf --output rustup.sh
+    - sh rustup.sh -y
+    - . $HOME/.cargo/env
+  test_script:
+    - . $HOME/.cargo/env
+    - cargo build --verbose
+    - cargo clippy --verbose
+    - cargo test --verbose
+
+task:
+  name: stable aarch-applen-darwin
+  macos_instance:
+    image: ghcr.io/cirruslabs/macos-ventura-base:latest
+  setup_script:
+    - curl https://sh.rustup.rs -sSf --output rustup.sh
+    - sh rustup.sh -y
+    - . $HOME/.cargo/env
+  test_script:
+    - . $HOME/.cargo/env
+    - cargo build --verbose
+    - cargo clippy --verbose
+    - cargo test --verbose

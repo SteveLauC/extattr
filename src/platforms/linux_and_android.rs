@@ -7,15 +7,17 @@ use std::{
     ptr::null_mut,
 };
 
-libc_bitflags!(
+libc_bitflags! {
     /// `flags` used when setting EAs
     pub struct SetxattrFlag: libc::c_int {
-        /// Perform a pure create, which fails if the named attribute exists already.
+        /// Perform a pure create, which fails if the named attribute exists
+        /// already.
         XATTR_CREATE;
-        /// Perform a pure replace operation, which fails if the named attribute does not already exist.
+        /// Perform a pure replace operation, which fails if the named attribute
+        /// does not already exist.
         XATTR_REPLACE;
     }
-);
+}
 
 /// Retrieves the list of extended attribute names associated with the given `path`
 /// in the filesystem. If `path` is a symbolic link, it will be dereferenced.
@@ -31,13 +33,9 @@ pub fn listxattr<P: AsRef<Path>>(path: P) -> Result<Vec<OsString>> {
     let buffer_size =
         match unsafe { libc::listxattr(path.as_ptr(), null_mut(), 0) } {
             -1 => return Err(errno()),
+            0 => return Ok(Vec::new()),
             buffer_size => buffer_size,
         };
-
-    // no entries, return early
-    if buffer_size == 0 {
-        return Ok(Vec::new());
-    }
 
     let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
     let res = unsafe {
@@ -76,13 +74,9 @@ pub fn llistxattr<P: AsRef<Path>>(path: P) -> Result<Vec<OsString>> {
     let buffer_size =
         match unsafe { libc::llistxattr(path.as_ptr(), null_mut(), 0) } {
             -1 => return Err(errno()),
+            0 => return Ok(Vec::new()),
             buffer_size => buffer_size,
         };
-
-    // no entries, return early
-    if buffer_size == 0 {
-        return Ok(Vec::new());
-    }
 
     let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
     let res = unsafe {
@@ -110,18 +104,13 @@ pub fn llistxattr<P: AsRef<Path>>(path: P) -> Result<Vec<OsString>> {
 /// specified by the open file descriptor `fd` in the filesystem.
 ///
 /// For more infomation, see [flistxattr(2)](https://man7.org/linux/man-pages/man2/listxattr.2.html)
-#[cfg(any(target_os = "linux", target_os = "android"))]
 pub fn flistxattr(fd: RawFd) -> Result<Vec<OsString>> {
     // query the buffer size
     let buffer_size = match unsafe { libc::flistxattr(fd, null_mut(), 0) } {
         -1 => return Err(errno()),
+        0 => return Ok(Vec::new()),
         buffer_size => buffer_size,
     };
-
-    // no entries, return early
-    if buffer_size == 0 {
-        return Ok(Vec::new());
-    }
 
     let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
     let res = unsafe {
@@ -174,13 +163,9 @@ where
         )
     } {
         -1 => return Err(errno()),
+        0 => return Ok(Vec::new()),
         buffer_size => buffer_size,
     };
-
-    // The corresponding value is empty, return
-    if buffer_size == 0 {
-        return Ok(Vec::new());
-    }
 
     let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
 
@@ -231,13 +216,9 @@ where
         )
     } {
         -1 => return Err(errno()),
+        0 => return Ok(Vec::new()),
         buffer_size => buffer_size,
     };
-
-    // The corresponding value is empty, return
-    if buffer_size == 0 {
-        return Ok(Vec::new());
-    }
 
     let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
 
@@ -278,13 +259,9 @@ where
         libc::fgetxattr(fd, name.as_ptr() as *mut libc::c_char, null_mut(), 0)
     } {
         -1 => return Err(errno()),
+        0 => return Ok(Vec::new()),
         buffer_size => buffer_size,
     };
-
-    // The corresponding value is empty, return
-    if buffer_size == 0 {
-        return Ok(Vec::new());
-    }
 
     let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
 

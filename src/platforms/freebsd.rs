@@ -590,7 +590,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use std::ffi::{OsStr, OsString};
+    use std::ffi::OsStr;
 
     #[test]
     fn test_parse_ea_entries() {

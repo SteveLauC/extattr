@@ -33,22 +33,6 @@ pub(crate) use libc_bitflags;
 /// values from the `libc` crate. This macro supports both `pub` and private `enum`s.
 ///
 /// The `libc` crate must be in scope with the name `libc`.
-///
-/// # Example
-/// ```ignore
-/// libc_enum!{
-///     pub enum ProtFlags {
-///         PROT_NONE,
-///         PROT_READ,
-///         PROT_WRITE,
-///         PROT_EXEC,
-///         #[cfg(any(target_os = "linux", target_os = "android"))]
-///         PROT_GROWSDOWN,
-///         #[cfg(any(target_os = "linux", target_os = "android"))]
-///         PROT_GROWSUP,
-///     }
-/// }
-/// ```
 #[allow(unused_macros)]
 macro_rules! libc_enum {
     // Exit rule.

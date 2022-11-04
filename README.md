@@ -55,7 +55,7 @@ pub fn setxattr<P, S, B>(
     path: P,
     name: S,
     value: B,
-    flags: SetxattrFlag
+    flags: Flags,
 ) -> Result<()>
 
 // FreeBSD

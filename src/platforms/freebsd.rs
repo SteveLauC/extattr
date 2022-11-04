@@ -12,6 +12,7 @@ use std::{
 };
 
 libc_enum! {
+    /// Attribute Namespace of EA.
     #[repr(i32)]
     pub enum AttrNamespace {
         EXTATTR_NAMESPACE_USER,

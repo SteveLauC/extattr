@@ -74,6 +74,10 @@ you are on Linux and want to use that extra `flags` argument, or you are on macO
 and want to use the arguments `position` and `options`, then `extattr` probably 
 is a good choice:)
 
+#### Minimum Supported Rust Version (MSRV)
+`extattr` is supported on Rust 1.56.1 and higher. The MSRV will not be changed 
+without bumping the major version.
+
 #### Contributing
 
 Contributions of all forms are welcome, feel free to file an issue or make a pull request!

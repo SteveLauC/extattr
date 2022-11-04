@@ -1,3 +1,5 @@
+//! EA syscall bindings for FreeBSD
+
 #![allow(non_camel_case_types)]
 
 use crate::{macros::libc_enum, Result};

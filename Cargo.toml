@@ -8,7 +8,6 @@ readme = "README.md"
 license = "GPL-2.0-only"
 repository = "https://github.com/SteveLauC/extattr"
 keywords = ["xattr", "filesystem", "unix", "extended-attribute"]
-rust = "1.56.1"
 
 
 [package.metadata.docs.rs]

@@ -1,3 +1,5 @@
+//! EA syscall bindings for macOS and iOS
+
 use crate::{macros::libc_bitflags, Result};
 use errno::{errno, Errno};
 use std::{

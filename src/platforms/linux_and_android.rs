@@ -1,3 +1,5 @@
+//! EA syscall bindings for Linux and Android
+
 use crate::{macros::libc_bitflags, Result};
 use errno::{errno, Errno};
 use std::{
@@ -9,7 +11,7 @@ use std::{
 
 libc_bitflags! {
     /// `flags` used when setting EAs
-    pub struct SetxattrFlag: libc::c_int {
+    pub struct Flags: libc::c_int {
         /// Perform a pure create, which fails if the named attribute exists
         /// already.
         XATTR_CREATE;
@@ -370,7 +372,7 @@ pub fn setxattr<P, S, B>(
     path: P,
     name: S,
     value: B,
-    flags: SetxattrFlag,
+    flags: Flags,
 ) -> Result<()>
 where
     P: AsRef<Path>,
@@ -414,7 +416,7 @@ pub fn lsetxattr<P, S, B>(
     path: P,
     name: S,
     value: B,
-    flags: SetxattrFlag,
+    flags: Flags,
 ) -> Result<()>
 where
     P: AsRef<Path>,
@@ -457,7 +459,7 @@ pub fn fsetxattr<S, B>(
     fd: RawFd,
     name: S,
     value: B,
-    flags: SetxattrFlag,
+    flags: Flags,
 ) -> Result<()>
 where
     S: AsRef<OsStr>,

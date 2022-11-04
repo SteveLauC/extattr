@@ -14,12 +14,12 @@ Yet another Extended Attributes library for Rust.
 
 ## Supported platforms and their documents
 
-* [Linux](https://docs.rs/extattr/0.1.1/x86_64-unknown-linux-gnu/extattr/index.html)
-* [FreeBSD](https://docs.rs/extattr/0.1.1/x86_64-unknown-freebsd/extattr/index.html)
-* [NetBSD](https://docs.rs/extattr/0.1.1/x86_64-unknown-netbsd/extattr/index.html)
-* [macOS](https://docs.rs/extattr/0.1.1/aarch64-apple-darwin/extattr/index.html)
-* [Android](https://docs.rs/extattr/0.1.1/aarch64-linux-android/extattr/index.html)
-* [iOS](https://docs.rs/extattr/0.1.1/aarch64-apple-ios/extattr/index.html)
+* [Linux](https://docs.rs/extattr/latest/x86_64-unknown-linux-gnu/extattr/index.html)
+* [FreeBSD](https://docs.rs/extattr/latest/x86_64-unknown-freebsd/extattr/index.html)
+* [NetBSD](https://docs.rs/extattr/latest/x86_64-unknown-netbsd/extattr/index.html)
+* [macOS](https://docs.rs/extattr/latest/aarch64-apple-darwin/extattr/index.html)
+* [Android](https://docs.rs/extattr/latest/aarch64-linux-android/extattr/index.html)
+* [iOS](https://docs.rs/extattr/latest/aarch64-apple-ios/extattr/index.html)
 
 ## Why another crate for EA? Any difference from [`xattr`](https://crates.io/crates/xattr)?
 

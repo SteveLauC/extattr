@@ -4,7 +4,7 @@ mod test_linux_android_netbsd {
     use errno::Errno;
     use extattr::{
         fgetxattr, flistxattr, fremovexattr, fsetxattr, getxattr, listxattr,
-        removexattr, setxattr, SetxattrFlag,
+        removexattr, setxattr, Flags,
     };
     use std::{fs::File, os::unix::io::AsRawFd};
 
@@ -18,7 +18,7 @@ mod test_linux_android_netbsd {
             temp_file_path.as_path(),
             "user.test_setxattr_file_exist",
             "",
-            SetxattrFlag::empty(),
+            Flags::empty(),
         );
 
         match res {
@@ -39,7 +39,7 @@ mod test_linux_android_netbsd {
             temp_file_path.as_path(),
             "user.test_setxattr_file_not_exist",
             "",
-            SetxattrFlag::empty(),
+            Flags::empty(),
         );
 
         assert_eq!(res, Err(Errno(libc::ENOENT)));
@@ -57,7 +57,7 @@ mod test_linux_android_netbsd {
             temp_file_path.as_path(),
             "user.test_setxattr_xattr_create",
             "",
-            SetxattrFlag::empty(),
+            Flags::empty(),
         );
 
         // EA is not supported on the underlying file system, skip the test.
@@ -70,7 +70,7 @@ mod test_linux_android_netbsd {
             temp_file_path.as_path(),
             "user.test_setxattr_xattr_create",
             "",
-            SetxattrFlag::XATTR_CREATE,
+            Flags::XATTR_CREATE,
         );
 
         assert_eq!(res, Err(Errno(libc::EEXIST)));
@@ -88,7 +88,7 @@ mod test_linux_android_netbsd {
             temp_file_path.as_path(),
             "user.test_setxattr_xattr_replace",
             "",
-            SetxattrFlag::XATTR_REPLACE,
+            Flags::XATTR_REPLACE,
         );
 
         match res {
@@ -109,7 +109,7 @@ mod test_linux_android_netbsd {
             temp_file_path.as_path(),
             "xxxx.test_setxattr_invalid_namespace",
             "",
-            SetxattrFlag::empty(),
+            Flags::empty(),
         );
 
         assert_eq!(res, Err(Errno(libc::ENOTSUP)));
@@ -126,7 +126,7 @@ mod test_linux_android_netbsd {
             temp_file_fd,
             "user.test_fsetxattr",
             "",
-            SetxattrFlag::empty(),
+            Flags::empty(),
         );
 
         match res {
@@ -180,7 +180,7 @@ mod test_linux_android_netbsd {
             temp_file_path.as_path(),
             "user.test_getxattr",
             "",
-            SetxattrFlag::empty(),
+            Flags::empty(),
         );
 
         // The underlying file system does not support EA, skip this test.
@@ -228,7 +228,7 @@ mod test_linux_android_netbsd {
             temp_file_fd,
             "user.test_fgetxattr",
             "",
-            SetxattrFlag::empty(),
+            Flags::empty(),
         );
 
         // The underlying file system does not support EA, skip this test.
@@ -255,7 +255,7 @@ mod test_linux_android_netbsd {
             temp_file_path.as_path(),
             "user.test_removexattr_ea_exist",
             "",
-            SetxattrFlag::empty(),
+            Flags::empty(),
         );
 
         // The underlying file system does not support EA, skip this test.
@@ -289,7 +289,7 @@ mod test_linux_android_netbsd {
             temp_file_path.as_path(),
             "user.ea",
             "",
-            SetxattrFlag::empty(),
+            Flags::empty(),
         ) {
             // The underlying file system does not support user EA, skip this test.
             return;
@@ -315,7 +315,7 @@ mod test_linux_android_netbsd {
             temp_file_fd,
             "user.test_fremovexattr",
             "",
-            SetxattrFlag::empty(),
+            Flags::empty(),
         );
 
         // The underlying file system does not support EA, skip this test.

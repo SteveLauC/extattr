@@ -1,4 +1,4 @@
-//! EA APIs of NetBSD
+//! EA syscall bindings for NetBSD
 //!
 //! We simply re-export the API of Linux and FreeBSD since NetBSD is compatible
 //! with them.

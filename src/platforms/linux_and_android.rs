@@ -368,12 +368,7 @@ where
 /// be dereferenced.
 ///
 /// For more information, see [setxattr(2)](https://man7.org/linux/man-pages/man2/lsetxattr.2.html)
-pub fn setxattr<P, S, B>(
-    path: P,
-    name: S,
-    value: B,
-    flags: Flags,
-) -> Result<()>
+pub fn setxattr<P, S, B>(path: P, name: S, value: B, flags: Flags) -> Result<()>
 where
     P: AsRef<Path>,
     S: AsRef<OsStr>,
@@ -455,12 +450,7 @@ where
 /// with the file specified by the open file descriptor `fd`.
 ///
 /// For more information, see [fsetxattr(2)](https://man7.org/linux/man-pages/man2/lsetxattr.2.html)
-pub fn fsetxattr<S, B>(
-    fd: RawFd,
-    name: S,
-    value: B,
-    flags: Flags,
-) -> Result<()>
+pub fn fsetxattr<S, B>(fd: RawFd, name: S, value: B, flags: Flags) -> Result<()>
 where
     S: AsRef<OsStr>,
     B: AsRef<[u8]>,

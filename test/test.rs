@@ -122,12 +122,8 @@ mod test_linux_android_netbsd {
         let temp_file = File::create(temp_file_path.as_path()).unwrap();
         let temp_file_fd = temp_file.as_raw_fd();
 
-        let res = fsetxattr(
-            temp_file_fd,
-            "user.test_fsetxattr",
-            "",
-            Flags::empty(),
-        );
+        let res =
+            fsetxattr(temp_file_fd, "user.test_fsetxattr", "", Flags::empty());
 
         match res {
             // The underlying file system does not support EA, skip this test.
@@ -224,12 +220,8 @@ mod test_linux_android_netbsd {
         let temp_file = File::create(temp_file_path).unwrap();
         let temp_file_fd = temp_file.as_raw_fd();
 
-        let res = fsetxattr(
-            temp_file_fd,
-            "user.test_fgetxattr",
-            "",
-            Flags::empty(),
-        );
+        let res =
+            fsetxattr(temp_file_fd, "user.test_fgetxattr", "", Flags::empty());
 
         // The underlying file system does not support EA, skip this test.
         if let Err(Errno(libc::ENOTSUP)) = res {
@@ -285,12 +277,9 @@ mod test_linux_android_netbsd {
         // EA is not supported but `trusted` and `security` EA are. Since we test
         // `removexattr` using `user` EA, we need to know if `user` EA is supported on
         // the underlying file system.
-        if let Err(Errno(libc::ENOTSUP)) = setxattr(
-            temp_file_path.as_path(),
-            "user.ea",
-            "",
-            Flags::empty(),
-        ) {
+        if let Err(Errno(libc::ENOTSUP)) =
+            setxattr(temp_file_path.as_path(), "user.ea", "", Flags::empty())
+        {
             // The underlying file system does not support user EA, skip this test.
             return;
         }

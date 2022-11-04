@@ -1,12 +1,13 @@
 [package]
 name = "extattr"
 description = "Extended Attributes API bindings for Rust"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["SteveLauC <stevelauc@outlook.com>"]
 readme = "README.md"
 license = "GPL-2.0-only"
 repository = "https://github.com/SteveLauC/extattr"
+keywords = ["xattr", "filesystem", "unix", "extended-attribute"]
 
 
 [package.metadata.docs.rs]

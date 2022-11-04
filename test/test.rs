@@ -394,25 +394,6 @@ mod test_freebsd_netbsd {
         );
     }
 
-    ///  call `extattr_get_file()` to query the `SYSTEM` EA, only user with
-    /// privilege is allowed to do this, we will get `EPERM`.
-    #[test]
-    fn test_extattr_get_file_permission_denied() {
-        let temp_dir = tempfile::tempdir_in("./").unwrap();
-        let temp_file_path =
-            temp_dir.path().join("test_extattr_get_file_file_not_exist");
-        let _temp_file = File::create(temp_file_path.as_path()).unwrap();
-
-        assert_eq!(
-            extattr_get_file(
-                temp_file_path.as_path(),
-                AttrNamespace::EXTATTR_NAMESPACE_SYSTEM,
-                "test_extattr_get_file_permission_denied",
-            ),
-            Err(Errno(libc::EPERM))
-        );
-    }
-
     #[test]
     fn test_extattr_delete_file_ea_exist() {
         let temp_dir = tempfile::tempdir_in("./").unwrap();
@@ -420,12 +401,13 @@ mod test_freebsd_netbsd {
             temp_dir.path().join("test_extattr_delete_file_ea_exist");
         File::create(temp_file_path.as_path()).unwrap();
 
-        let res = extattr_set_file(
+        extattr_set_file(
             temp_file_path.as_path(),
             AttrNamespace::EXTATTR_NAMESPACE_USER,
             "test_extattr_delete_file_ea_exist",
             "",
-        );
+        )
+        .unwrap();
 
         extattr_delete_file(
             temp_file_path.as_path(),

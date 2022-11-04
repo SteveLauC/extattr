@@ -1,11 +1,18 @@
-## extattr
+# extattr
 [![Cirrus Build Status](https://api.cirrus-ci.com/github/SteveLauC/extattr.svg)](https://cirrus-ci.com/github/SteveLauC/extattr)
 [![crates.io](https://img.shields.io/crates/v/extattr.svg)](https://crates.io/crates/extattr)
 [![docs.rs](https://docs.rs/extattr/badge.svg)](https://docs.rs/extattr)
 
 Yet another Extended Attributes library for Rust.
 
-#### Supported platforms and their documents
+## Table of contents
+
+  * [Supported platforms and Documents](https://github.com/SteveLauC/extattr#supported-platforms-and-their-documents)
+  * [Why another crate for EA? Diff from `xattr`](https://github.com/SteveLauC/extattr#why-another-crate-for-ea-any-difference-from-xattr)
+  * [MSRV](https://github.com/SteveLauC/extattr#minimum-supported-rust-version-msrv)
+  * [Contributing](https://github.com/SteveLauC/extattr#contributing)
+
+## Supported platforms and their documents
 
 * [Linux](https://docs.rs/extattr/0.1.1/x86_64-unknown-linux-gnu/extattr/index.html)
 * [FreeBSD](https://docs.rs/extattr/0.1.1/x86_64-unknown-freebsd/extattr/index.html)
@@ -14,7 +21,7 @@ Yet another Extended Attributes library for Rust.
 * [Android](https://docs.rs/extattr/0.1.1/aarch64-linux-android/extattr/index.html)
 * [iOS](https://docs.rs/extattr/0.1.1/aarch64-apple-ios/extattr/index.html)
 
-#### Why another crate for EA? Any difference from [`xattr`](https://crates.io/crates/xattr)?
+## Why another crate for EA? Any difference from [`xattr`](https://crates.io/crates/xattr)?
 
 Extended Attributes syscalls vary across implementations, for example, to set an EA:
 
@@ -74,11 +81,11 @@ you are on Linux and want to use that extra `flags` argument, or you are on macO
 and want to use the arguments `position` and `options`, then `extattr` probably 
 is a good choice:)
 
-#### Minimum Supported Rust Version (MSRV)
+## Minimum Supported Rust Version (MSRV)
 `extattr` is supported on Rust 1.56.1 and higher. The MSRV will not be changed 
 without bumping the major version.
 
-#### Contributing
+## Contributing
 
 Contributions of all forms are welcome, feel free to file an issue or make a pull request!
 

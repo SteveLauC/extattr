@@ -12,7 +12,6 @@ task:
     - . $HOME/.cargo/env
   test_script:
     - . $HOME/.cargo/env
-    - cargo build --verbose
     - cargo clippy --verbose
     - cargo test --verbose
 
@@ -30,12 +29,11 @@ task:
     - . $HOME/.cargo/env
   test_script:
     - . $HOME/.cargo/env
-    - cargo build --verbose
     - cargo clippy --verbose
     - cargo test --verbose
 
 task:
-  name: stable aarch-applen-darwin
+  name: stable aarch64-apple-darwin
   macos_instance:
     image: ghcr.io/cirruslabs/macos-ventura-base:latest
   sysinfo_script:
@@ -47,6 +45,5 @@ task:
     - . $HOME/.cargo/env
   test_script:
     - . $HOME/.cargo/env
-    - cargo build --verbose
     - cargo clippy --verbose
     - cargo test --verbose

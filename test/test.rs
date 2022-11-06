@@ -1,6 +1,6 @@
 #[cfg(test)]
-#[cfg(any(target_os = "linux", target_os = "android", target_os = "netbsd"))]
-mod test_linux_android_netbsd {
+#[cfg(any(target_os = "linux", target_os = "android"))]
+mod linux_android {
     use errno::Errno;
     use extattr::{
         fgetxattr, flistxattr, fremovexattr, fsetxattr, getxattr, listxattr,
@@ -320,8 +320,8 @@ mod test_linux_android_netbsd {
 }
 
 #[cfg(test)]
-#[cfg(any(target_os = "freebsd", target_os = "netbsd"))]
-mod test_freebsd_netbsd {
+#[cfg(target_os = "freebsd")]
+mod freebsd{
     use errno::Errno;
     use extattr::{
         extattr_delete_fd, extattr_delete_file, extattr_get_fd,

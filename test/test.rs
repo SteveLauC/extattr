@@ -321,7 +321,7 @@ mod linux_android {
 
 #[cfg(test)]
 #[cfg(target_os = "freebsd")]
-mod freebsd{
+mod freebsd {
     use errno::Errno;
     use extattr::{
         extattr_delete_fd, extattr_delete_file, extattr_get_fd,

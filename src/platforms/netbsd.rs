@@ -10,9 +10,8 @@
 // pub use super::freebsd::*;
 // pub use super::linux_and_android::*;
 
-pub use linux::*;
 pub use freebsd::*;
-
+pub use linux::*;
 
 // Currently, we have to make the bindings ourselves.
 mod bindings {
@@ -1077,7 +1076,10 @@ mod linux {
         };
 
         let res = unsafe {
-            super::bindings::removexattr(path.as_ptr() as *mut libc::c_char, name.as_ptr())
+            super::bindings::removexattr(
+                path.as_ptr() as *mut libc::c_char,
+                name.as_ptr(),
+            )
         };
 
         match res {
@@ -1249,7 +1251,13 @@ mod linux {
         let value_len = value.as_ref().len();
 
         let res = unsafe {
-            super::bindings::fsetxattr(fd, name.as_ptr(), value_ptr, value_len, flags.bits())
+            super::bindings::fsetxattr(
+                fd,
+                name.as_ptr(),
+                value_ptr,
+                value_len,
+                flags.bits(),
+            )
         };
 
         match res {

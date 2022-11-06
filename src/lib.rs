@@ -16,7 +16,7 @@
 //!
 //! // FreeBSD
 //! ssize_t extattr_set_file(const char *path, int attrnamespace,
-//! const char *attrname, const void *data, size_t	nbytes);
+//! const char *attrname, const void *data, size_t nbytes);
 //!
 //! // macOS
 //! int setxattr(const char *path, const char *name, void *value, size_t size,

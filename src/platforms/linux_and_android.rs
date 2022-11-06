@@ -392,7 +392,7 @@ where
             name.as_ptr(),
             value_ptr,
             value_len,
-            flags.bits,
+            flags.bits(),
         )
     };
 
@@ -436,7 +436,7 @@ where
             name.as_ptr(),
             value_ptr,
             value_len,
-            flags.bits,
+            flags.bits(),
         )
     };
 
@@ -464,7 +464,7 @@ where
     let value_len = value.as_ref().len();
 
     let res = unsafe {
-        libc::fsetxattr(fd, name.as_ptr(), value_ptr, value_len, flags.bits)
+        libc::fsetxattr(fd, name.as_ptr(), value_ptr, value_len, flags.bits())
     };
 
     match res {

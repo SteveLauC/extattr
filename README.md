@@ -1,7 +1,10 @@
 # extattr
 [![Cirrus Build Status](https://api.cirrus-ci.com/github/SteveLauC/extattr.svg)](https://cirrus-ci.com/github/SteveLauC/extattr)
 [![crates.io](https://img.shields.io/crates/v/extattr.svg)](https://crates.io/crates/extattr)
+![Crates.io](https://img.shields.io/crates/d/extattr?color=orange)
 [![docs.rs](https://docs.rs/extattr/badge.svg)](https://docs.rs/extattr)
+![MSRV](https://img.shields.io/badge/MSRV-1.56.1-brightgreen)
+[![License](http://img.shields.io/badge/license-GPL-orange.svg)](https://github.com/SteveLuaC/extattr/blob/main/LICENSE)
 
 Yet another Extended Attributes library for Rust.
 

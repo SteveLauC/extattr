@@ -1,8 +1,6 @@
 //! EA syscall bindings for FreeBSD
 
-#![allow(non_camel_case_types)]
-
-use crate::{macros::libc_enum, Result};
+use crate::Result;
 use errno::{errno, Errno};
 use std::{
     ffi::{CString, OsStr, OsString},
@@ -11,13 +9,15 @@ use std::{
     ptr::null_mut,
 };
 
-libc_enum! {
-    /// Attribute Namespace of EA.
-    #[repr(i32)]
-    pub enum AttrNamespace {
-        EXTATTR_NAMESPACE_USER,
-        EXTATTR_NAMESPACE_SYSTEM,
-    }
+#[repr(i32)]
+#[derive(Debug, Clone, Copy)]
+#[allow(non_camel_case_types)]
+/// `attrnamespace` argument
+pub enum AttrNamespace {
+    /// User namespace EA
+    EXTATTR_NAMESPACE_USER = libc::EXTATTR_NAMESPACE_USER,
+    /// System namespace EA
+    EXTATTR_NAMESPACE_SYSTEM = libc::EXTATTR_NAMESPACE_SYSTEM,
 }
 
 /// Deletes the extended attribute specified in `attrnamespace` and `attrname`

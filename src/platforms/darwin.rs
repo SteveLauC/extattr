@@ -1,6 +1,7 @@
 //! EA syscall bindings for macOS and iOS
 
-use crate::{macros::libc_bitflags, Result};
+use crate::Result;
+use bitflags::bitflags;
 use errno::{errno, Errno};
 use std::{
     ffi::{CString, OsStr, OsString},
@@ -9,17 +10,17 @@ use std::{
     ptr::null_mut,
 };
 
-libc_bitflags! {
+bitflags! {
     /// `options` argument
     pub struct Options: libc::c_int {
         /// Do not follow symbolic links.
-        XATTR_NOFOLLOW;
+        const XATTR_NOFOLLOW = libc::XATTR_NOFOLLOW;
         /// Perform a pure create, which fails if the named attribute exists
         /// already.
-        XATTR_CREATE;
+        const XATTR_CREATE = libc::XATTR_CREATE;
         /// Perform a pure replace operation, which fails if the named attribute
         /// does not already exist.
-        XATTR_REPLACE;
+        const XATTR_REPLACE = libc::XATTR_REPLACE;
     }
 }
 

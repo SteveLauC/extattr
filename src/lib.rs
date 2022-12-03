@@ -64,8 +64,13 @@
 //! you are on Linux and want to use that extra `flags` argument, or you are on macOS
 //! and want to use the arguments `position` and `options`, then `extattr` probably
 //! is a good choice:)
+#![crate_name = "extattr"]
+#![cfg(unix)]
+#![deny(unused)]
+#![deny(missing_debug_implementations)]
+#![deny(missing_copy_implementations)]
+#![deny(missing_docs)]
 
-mod macros;
 mod platforms;
 
 use errno::Errno;

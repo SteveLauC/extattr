@@ -1,6 +1,7 @@
 //! EA syscall bindings for Linux and Android
 
-use crate::{macros::libc_bitflags, Result};
+use crate::Result;
+use bitflags::bitflags;
 use errno::{errno, Errno};
 use std::{
     ffi::{CString, OsStr, OsString},
@@ -9,15 +10,15 @@ use std::{
     ptr::null_mut,
 };
 
-libc_bitflags! {
+bitflags! {
     /// `flags` used when setting EAs
     pub struct Flags: libc::c_int {
         /// Perform a pure create, which fails if the named attribute exists
         /// already.
-        XATTR_CREATE;
+        const XATTR_CREATE = libc::XATTR_CREATE;
         /// Perform a pure replace operation, which fails if the named attribute
         /// does not already exist.
-        XATTR_REPLACE;
+        const XATTR_REPLACE = libc::XATTR_REPLACE;
     }
 }
 
@@ -82,7 +83,7 @@ pub fn llistxattr<P: AsRef<Path>>(path: P) -> Result<Vec<OsString>> {
 
     let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
     let res = unsafe {
-        libc::listxattr(
+        libc::llistxattr(
             path.as_ptr(),
             buffer.as_ptr() as *mut libc::c_char,
             buffer.capacity(),
@@ -157,12 +158,7 @@ where
 
     // query the buffer size
     let buffer_size = match unsafe {
-        libc::getxattr(
-            path.as_ptr(),
-            name.as_ptr() as *mut libc::c_char,
-            null_mut(),
-            0,
-        )
+        libc::getxattr(path.as_ptr(), name.as_ptr(), null_mut(), 0)
     } {
         -1 => return Err(errno()),
         0 => return Ok(Vec::new()),
@@ -173,8 +169,8 @@ where
 
     let res = unsafe {
         libc::getxattr(
-            path.as_ptr() as *mut libc::c_char,
-            name.as_ptr() as *mut libc::c_char,
+            path.as_ptr(),
+            name.as_ptr(),
             buffer.as_ptr() as *mut libc::c_void,
             buffer_size as usize,
         )
@@ -210,12 +206,7 @@ where
 
     // query the buffer size
     let buffer_size = match unsafe {
-        libc::lgetxattr(
-            path.as_ptr(),
-            name.as_ptr() as *mut libc::c_char,
-            null_mut(),
-            0,
-        )
+        libc::lgetxattr(path.as_ptr(), name.as_ptr(), null_mut(), 0)
     } {
         -1 => return Err(errno()),
         0 => return Ok(Vec::new()),
@@ -226,8 +217,8 @@ where
 
     let res = unsafe {
         libc::lgetxattr(
-            path.as_ptr() as *mut libc::c_char,
-            name.as_ptr() as *mut libc::c_char,
+            path.as_ptr(),
+            name.as_ptr(),
             buffer.as_ptr() as *mut libc::c_void,
             buffer_size as usize,
         )
@@ -257,20 +248,19 @@ where
     };
 
     // query the buffer size
-    let buffer_size = match unsafe {
-        libc::fgetxattr(fd, name.as_ptr() as *mut libc::c_char, null_mut(), 0)
-    } {
-        -1 => return Err(errno()),
-        0 => return Ok(Vec::new()),
-        buffer_size => buffer_size,
-    };
+    let buffer_size =
+        match unsafe { libc::fgetxattr(fd, name.as_ptr(), null_mut(), 0) } {
+            -1 => return Err(errno()),
+            0 => return Ok(Vec::new()),
+            buffer_size => buffer_size,
+        };
 
     let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
 
     let res = unsafe {
         libc::fgetxattr(
             fd,
-            name.as_ptr() as *mut libc::c_char,
+            name.as_ptr(),
             buffer.as_ptr() as *mut libc::c_void,
             buffer_size as usize,
         )
@@ -304,9 +294,7 @@ where
         _ => return Err(Errno(libc::EINVAL)),
     };
 
-    let res = unsafe {
-        libc::removexattr(path.as_ptr() as *mut libc::c_char, name.as_ptr())
-    };
+    let res = unsafe { libc::removexattr(path.as_ptr(), name.as_ptr()) };
 
     match res {
         -1 => Err(errno()),
@@ -333,9 +321,7 @@ where
         _ => return Err(Errno(libc::EINVAL)),
     };
 
-    let res = unsafe {
-        libc::lremovexattr(path.as_ptr() as *mut libc::c_char, name.as_ptr())
-    };
+    let res = unsafe { libc::lremovexattr(path.as_ptr(), name.as_ptr()) };
 
     match res {
         -1 => Err(errno()),
@@ -388,7 +374,7 @@ where
 
     let res = unsafe {
         libc::setxattr(
-            path.as_ptr() as *mut libc::c_char,
+            path.as_ptr(),
             name.as_ptr(),
             value_ptr,
             value_len,
@@ -431,8 +417,8 @@ where
     let value_len = value.as_ref().len();
 
     let res = unsafe {
-        libc::setxattr(
-            path.as_ptr() as *mut libc::c_char,
+        libc::lsetxattr(
+            path.as_ptr(),
             name.as_ptr(),
             value_ptr,
             value_len,

@@ -44,7 +44,7 @@ pub fn listxattr<P: AsRef<Path>>(path: P) -> Result<Vec<OsString>> {
     let res = unsafe {
         libc::listxattr(
             path.as_ptr(),
-            buffer.as_ptr() as *mut libc::c_char,
+            buffer.as_mut_ptr().cast(),
             buffer.capacity(),
         )
     };
@@ -85,7 +85,7 @@ pub fn llistxattr<P: AsRef<Path>>(path: P) -> Result<Vec<OsString>> {
     let res = unsafe {
         libc::llistxattr(
             path.as_ptr(),
-            buffer.as_ptr() as *mut libc::c_char,
+            buffer.as_mut_ptr().cast(),
             buffer.capacity(),
         )
     };
@@ -119,7 +119,7 @@ pub fn flistxattr(fd: RawFd) -> Result<Vec<OsString>> {
     let res = unsafe {
         libc::flistxattr(
             fd,
-            buffer.as_ptr() as *mut libc::c_char,
+            buffer.as_mut_ptr().cast(),
             buffer.capacity(),
         )
     };
@@ -143,9 +143,9 @@ pub fn flistxattr(fd: RawFd) -> Result<Vec<OsString>> {
 ///
 /// For more information, see [getxattr(2)](https://man7.org/linux/man-pages/man2/getxattr.2.html)
 pub fn getxattr<P, S>(path: P, name: S) -> Result<Vec<u8>>
-where
-    P: AsRef<Path>,
-    S: AsRef<OsStr>,
+    where
+        P: AsRef<Path>,
+        S: AsRef<OsStr>,
 {
     let name = match CString::new(name.as_ref().as_bytes()) {
         Ok(n) => n,
@@ -171,7 +171,7 @@ where
         libc::getxattr(
             path.as_ptr(),
             name.as_ptr(),
-            buffer.as_ptr() as *mut libc::c_void,
+            buffer.as_mut_ptr().cast(),
             buffer_size as usize,
         )
     };
@@ -191,9 +191,9 @@ where
 ///
 /// For more information, see [lgetxattr(2)](https://man7.org/linux/man-pages/man2/getxattr.2.html)
 pub fn lgetxattr<P, S>(path: P, name: S) -> Result<Vec<u8>>
-where
-    P: AsRef<Path>,
-    S: AsRef<OsStr>,
+    where
+        P: AsRef<Path>,
+        S: AsRef<OsStr>,
 {
     let name = match CString::new(name.as_ref().as_bytes()) {
         Ok(n) => n,
@@ -219,7 +219,7 @@ where
         libc::lgetxattr(
             path.as_ptr(),
             name.as_ptr(),
-            buffer.as_ptr() as *mut libc::c_void,
+            buffer.as_mut_ptr().cast(),
             buffer_size as usize,
         )
     };
@@ -239,8 +239,8 @@ where
 ///
 /// For more information, see [fgetxattr(2)](https://man7.org/linux/man-pages/man2/getxattr.2.html)
 pub fn fgetxattr<S>(fd: RawFd, name: S) -> Result<Vec<u8>>
-where
-    S: AsRef<OsStr>,
+    where
+        S: AsRef<OsStr>,
 {
     let name = match CString::new(name.as_ref().as_bytes()) {
         Ok(name) => name,
@@ -261,7 +261,7 @@ where
         libc::fgetxattr(
             fd,
             name.as_ptr(),
-            buffer.as_ptr() as *mut libc::c_void,
+            buffer.as_mut_ptr().cast(),
             buffer_size as usize,
         )
     };
@@ -281,9 +281,9 @@ where
 ///
 /// For more information, see [removexattr(2)](https://man7.org/linux/man-pages/man2/removexattr.2.html)
 pub fn removexattr<P, S>(path: P, name: S) -> Result<()>
-where
-    P: AsRef<Path>,
-    S: AsRef<OsStr>,
+    where
+        P: AsRef<Path>,
+        S: AsRef<OsStr>,
 {
     let path = match CString::new(path.as_ref().as_os_str().as_bytes()) {
         Ok(n) => n,
@@ -308,9 +308,9 @@ where
 ///
 /// For more information, see [lremovexattr(2)](https://man7.org/linux/man-pages/man2/removexattr.2.html)
 pub fn lremovexattr<P, S>(path: P, name: S) -> Result<()>
-where
-    P: AsRef<Path>,
-    S: AsRef<OsStr>,
+    where
+        P: AsRef<Path>,
+        S: AsRef<OsStr>,
 {
     let path = match CString::new(path.as_ref().as_os_str().as_bytes()) {
         Ok(n) => n,
@@ -334,8 +334,8 @@ where
 ///
 /// For more information, see [fremovexattr(2)](https://man7.org/linux/man-pages/man2/removexattr.2.html)
 pub fn fremovexattr<S>(fd: RawFd, name: S) -> Result<()>
-where
-    S: AsRef<OsStr>,
+    where
+        S: AsRef<OsStr>,
 {
     let name = match CString::new(name.as_ref().as_bytes()) {
         Ok(name) => name,
@@ -355,10 +355,10 @@ where
 ///
 /// For more information, see [setxattr(2)](https://man7.org/linux/man-pages/man2/lsetxattr.2.html)
 pub fn setxattr<P, S, B>(path: P, name: S, value: B, flags: Flags) -> Result<()>
-where
-    P: AsRef<Path>,
-    S: AsRef<OsStr>,
-    B: AsRef<[u8]>,
+    where
+        P: AsRef<Path>,
+        S: AsRef<OsStr>,
+        B: AsRef<[u8]>,
 {
     let path = match CString::new(path.as_ref().as_os_str().as_bytes()) {
         Ok(n) => n,
@@ -369,7 +369,7 @@ where
         _ => return Err(Errno(libc::EINVAL)),
     };
 
-    let value_ptr = value.as_ref().as_ptr() as *mut libc::c_void;
+    let value_ptr = value.as_ref().as_ptr().cast();
     let value_len = value.as_ref().len();
 
     let res = unsafe {
@@ -399,10 +399,10 @@ pub fn lsetxattr<P, S, B>(
     value: B,
     flags: Flags,
 ) -> Result<()>
-where
-    P: AsRef<Path>,
-    S: AsRef<OsStr>,
-    B: AsRef<[u8]>,
+    where
+        P: AsRef<Path>,
+        S: AsRef<OsStr>,
+        B: AsRef<[u8]>,
 {
     let path = match CString::new(path.as_ref().as_os_str().as_bytes()) {
         Ok(n) => n,
@@ -413,7 +413,7 @@ where
         _ => return Err(Errno(libc::EINVAL)),
     };
 
-    let value_ptr = value.as_ref().as_ptr() as *mut libc::c_void;
+    let value_ptr = value.as_ref().as_ptr().cast();
     let value_len = value.as_ref().len();
 
     let res = unsafe {
@@ -437,16 +437,16 @@ where
 ///
 /// For more information, see [fsetxattr(2)](https://man7.org/linux/man-pages/man2/lsetxattr.2.html)
 pub fn fsetxattr<S, B>(fd: RawFd, name: S, value: B, flags: Flags) -> Result<()>
-where
-    S: AsRef<OsStr>,
-    B: AsRef<[u8]>,
+    where
+        S: AsRef<OsStr>,
+        B: AsRef<[u8]>,
 {
     let name = match CString::new(name.as_ref().as_bytes()) {
         Ok(name) => name,
         _ => return Err(Errno(libc::EINVAL)),
     };
 
-    let value_ptr = value.as_ref().as_ptr() as *mut libc::c_void;
+    let value_ptr = value.as_ref().as_ptr().cast();
     let value_len = value.as_ref().len();
 
     let res = unsafe {

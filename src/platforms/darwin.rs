@@ -52,7 +52,7 @@ pub fn listxattr<P: AsRef<Path>>(
     let res = unsafe {
         libc::listxattr(
             path.as_ptr(),
-            buffer.as_ptr() as *mut libc::c_char,
+            buffer.as_mut_ptr().cast(),
             buffer.capacity(),
             options,
         )
@@ -91,7 +91,7 @@ pub fn flistxattr(fd: RawFd, options: Options) -> Result<Vec<OsString>> {
     let res = unsafe {
         libc::flistxattr(
             fd,
-            buffer.as_ptr() as *mut libc::c_char,
+            buffer.as_mut_ptr().cast(),
             buffer.capacity(),
             options,
         )
@@ -139,7 +139,7 @@ where
     let buffer_size = match unsafe {
         libc::getxattr(
             path.as_ptr(),
-            name.as_ptr() as *mut libc::c_char,
+            name.as_ptr().cast(),
             null_mut(),
             0,
             position,
@@ -155,9 +155,9 @@ where
 
     let res = unsafe {
         libc::getxattr(
-            path.as_ptr() as *mut libc::c_char,
-            name.as_ptr() as *mut libc::c_char,
-            buffer.as_ptr() as *mut libc::c_void,
+            path.as_ptr(),
+            name.as_ptr(),
+            buffer.as_mut_ptr().cast(),
             buffer_size as usize,
             position,
             options,
@@ -195,7 +195,7 @@ pub fn fgetxattr<S: AsRef<OsStr>>(
     let buffer_size = match unsafe {
         libc::fgetxattr(
             fd,
-            name.as_ptr() as *mut libc::c_char,
+            name.as_ptr(),
             null_mut(),
             0,
             position,
@@ -212,8 +212,8 @@ pub fn fgetxattr<S: AsRef<OsStr>>(
     let res = unsafe {
         libc::fgetxattr(
             fd,
-            name.as_ptr() as *mut libc::c_char,
-            buffer.as_ptr() as *mut libc::c_void,
+            name.as_ptr(),
+            buffer.as_mut_ptr().cast(),
             buffer_size as usize,
             position,
             options,
@@ -251,7 +251,7 @@ where
 
     let res = unsafe {
         libc::removexattr(
-            path.as_ptr() as *mut libc::c_char,
+            path.as_ptr(),
             name.as_ptr(),
             options,
         )
@@ -312,13 +312,13 @@ where
         Ok(name) => name,
         _ => return Err(Errno(libc::EINVAL)),
     };
-    let value_ptr = value.as_ref().as_ptr() as *mut libc::c_void;
+    let value_ptr = value.as_ref().as_ptr().cast();
     let value_len = value.as_ref().len();
     let options = options.bits();
 
     let res = unsafe {
         libc::setxattr(
-            path.as_ptr() as *mut libc::c_char,
+            path.as_ptr(),
             name.as_ptr(),
             value_ptr,
             value_len,
@@ -353,7 +353,7 @@ where
         Ok(name) => name,
         _ => return Err(Errno(libc::EINVAL)),
     };
-    let value_ptr = value.as_ref().as_ptr() as *mut libc::c_void;
+    let value_ptr = value.as_ref().as_ptr().cast();
     let value_len = value.as_ref().len();
     let options = options.bits();
 

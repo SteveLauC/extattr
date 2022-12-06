@@ -129,7 +129,7 @@ mod linux {
         let res = unsafe {
             super::bindings::listxattr(
                 path.as_ptr(),
-                buffer.as_ptr() as *mut libc::c_char,
+                buffer.as_mut_ptr().cast(),
                 buffer.capacity(),
             )
         };
@@ -171,7 +171,7 @@ mod linux {
         let res = unsafe {
             super::bindings::llistxattr(
                 path.as_ptr(),
-                buffer.as_ptr() as *mut libc::c_char,
+                buffer.as_mut_ptr().cast(),
                 buffer.capacity(),
             )
         };
@@ -206,7 +206,7 @@ mod linux {
         let res = unsafe {
             super::bindings::flistxattr(
                 fd,
-                buffer.as_ptr() as *mut libc::c_char,
+                buffer.as_mut_ptr().cast(),
                 buffer.capacity(),
             )
         };
@@ -230,9 +230,9 @@ mod linux {
     ///
     /// For more information, see [getxattr(2)](https://man7.org/linux/man-pages/man2/getxattr.2.html)
     pub fn getxattr<P, S>(path: P, name: S) -> Result<Vec<u8>>
-    where
-        P: AsRef<Path>,
-        S: AsRef<OsStr>,
+        where
+            P: AsRef<Path>,
+            S: AsRef<OsStr>,
     {
         let name = match CString::new(name.as_ref().as_bytes()) {
             Ok(n) => n,
@@ -263,7 +263,7 @@ mod linux {
             super::bindings::getxattr(
                 path.as_ptr(),
                 name.as_ptr(),
-                buffer.as_ptr() as *mut libc::c_void,
+                buffer.as_mut_ptr().cast(),
                 buffer_size as usize,
             )
         };
@@ -283,9 +283,9 @@ mod linux {
     ///
     /// For more information, see [lgetxattr(2)](https://man7.org/linux/man-pages/man2/getxattr.2.html)
     pub fn lgetxattr<P, S>(path: P, name: S) -> Result<Vec<u8>>
-    where
-        P: AsRef<Path>,
-        S: AsRef<OsStr>,
+        where
+            P: AsRef<Path>,
+            S: AsRef<OsStr>,
     {
         let name = match CString::new(name.as_ref().as_bytes()) {
             Ok(n) => n,
@@ -316,7 +316,7 @@ mod linux {
             super::bindings::lgetxattr(
                 path.as_ptr(),
                 name.as_ptr(),
-                buffer.as_ptr() as *mut libc::c_void,
+                buffer.as_mut_ptr().cast(),
                 buffer_size as usize,
             )
         };
@@ -336,8 +336,8 @@ mod linux {
     ///
     /// For more information, see [fgetxattr(2)](https://man7.org/linux/man-pages/man2/getxattr.2.html)
     pub fn fgetxattr<S>(fd: RawFd, name: S) -> Result<Vec<u8>>
-    where
-        S: AsRef<OsStr>,
+        where
+            S: AsRef<OsStr>,
     {
         let name = match CString::new(name.as_ref().as_bytes()) {
             Ok(name) => name,
@@ -359,7 +359,7 @@ mod linux {
             super::bindings::fgetxattr(
                 fd,
                 name.as_ptr(),
-                buffer.as_ptr() as *mut libc::c_void,
+                buffer.as_mut_ptr().cast(),
                 buffer_size as usize,
             )
         };
@@ -379,9 +379,9 @@ mod linux {
     ///
     /// For more information, see [removexattr(2)](https://man7.org/linux/man-pages/man2/removexattr.2.html)
     pub fn removexattr<P, S>(path: P, name: S) -> Result<()>
-    where
-        P: AsRef<Path>,
-        S: AsRef<OsStr>,
+        where
+            P: AsRef<Path>,
+            S: AsRef<OsStr>,
     {
         let path = match CString::new(path.as_ref().as_os_str().as_bytes()) {
             Ok(n) => n,
@@ -408,9 +408,9 @@ mod linux {
     ///
     /// For more information, see [lremovexattr(2)](https://man7.org/linux/man-pages/man2/removexattr.2.html)
     pub fn lremovexattr<P, S>(path: P, name: S) -> Result<()>
-    where
-        P: AsRef<Path>,
-        S: AsRef<OsStr>,
+        where
+            P: AsRef<Path>,
+            S: AsRef<OsStr>,
     {
         let path = match CString::new(path.as_ref().as_os_str().as_bytes()) {
             Ok(n) => n,
@@ -436,8 +436,8 @@ mod linux {
     ///
     /// For more information, see [fremovexattr(2)](https://man7.org/linux/man-pages/man2/removexattr.2.html)
     pub fn fremovexattr<S>(fd: RawFd, name: S) -> Result<()>
-    where
-        S: AsRef<OsStr>,
+        where
+            S: AsRef<OsStr>,
     {
         let name = match CString::new(name.as_ref().as_bytes()) {
             Ok(name) => name,
@@ -462,10 +462,10 @@ mod linux {
         value: B,
         flags: Flags,
     ) -> Result<()>
-    where
-        P: AsRef<Path>,
-        S: AsRef<OsStr>,
-        B: AsRef<[u8]>,
+        where
+            P: AsRef<Path>,
+            S: AsRef<OsStr>,
+            B: AsRef<[u8]>,
     {
         let path = match CString::new(path.as_ref().as_os_str().as_bytes()) {
             Ok(n) => n,
@@ -476,7 +476,7 @@ mod linux {
             _ => return Err(Errno(libc::EINVAL)),
         };
 
-        let value_ptr = value.as_ref().as_ptr() as *mut libc::c_void;
+        let value_ptr = value.as_ref().as_ptr().cast();
         let value_len = value.as_ref().len();
 
         let res = unsafe {
@@ -506,10 +506,10 @@ mod linux {
         value: B,
         flags: Flags,
     ) -> Result<()>
-    where
-        P: AsRef<Path>,
-        S: AsRef<OsStr>,
-        B: AsRef<[u8]>,
+        where
+            P: AsRef<Path>,
+            S: AsRef<OsStr>,
+            B: AsRef<[u8]>,
     {
         let path = match CString::new(path.as_ref().as_os_str().as_bytes()) {
             Ok(n) => n,
@@ -520,7 +520,7 @@ mod linux {
             _ => return Err(Errno(libc::EINVAL)),
         };
 
-        let value_ptr = value.as_ref().as_ptr() as *mut libc::c_void;
+        let value_ptr = value.as_ref().as_ptr().cast();
         let value_len = value.as_ref().len();
 
         let res = unsafe {
@@ -549,16 +549,16 @@ mod linux {
         value: B,
         flags: Flags,
     ) -> Result<()>
-    where
-        S: AsRef<OsStr>,
-        B: AsRef<[u8]>,
+        where
+            S: AsRef<OsStr>,
+            B: AsRef<[u8]>,
     {
         let name = match CString::new(name.as_ref().as_bytes()) {
             Ok(name) => name,
             _ => return Err(Errno(libc::EINVAL)),
         };
 
-        let value_ptr = value.as_ref().as_ptr() as *mut libc::c_void;
+        let value_ptr = value.as_ref().as_ptr().cast();
         let value_len = value.as_ref().len();
 
         let res = unsafe {

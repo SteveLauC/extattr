@@ -129,7 +129,7 @@ mod linux {
         let res = unsafe {
             super::bindings::listxattr(
                 path.as_ptr(),
-                buffer.as_ptr() as *mut libc::c_char,
+                buffer.as_mut_ptr().cast(),
                 buffer.capacity(),
             )
         };
@@ -171,7 +171,7 @@ mod linux {
         let res = unsafe {
             super::bindings::llistxattr(
                 path.as_ptr(),
-                buffer.as_ptr() as *mut libc::c_char,
+                buffer.as_mut_ptr().cast(),
                 buffer.capacity(),
             )
         };
@@ -206,7 +206,7 @@ mod linux {
         let res = unsafe {
             super::bindings::flistxattr(
                 fd,
-                buffer.as_ptr() as *mut libc::c_char,
+                buffer.as_mut_ptr().cast(),
                 buffer.capacity(),
             )
         };
@@ -263,7 +263,7 @@ mod linux {
             super::bindings::getxattr(
                 path.as_ptr(),
                 name.as_ptr(),
-                buffer.as_ptr() as *mut libc::c_void,
+                buffer.as_mut_ptr().cast(),
                 buffer_size as usize,
             )
         };
@@ -316,7 +316,7 @@ mod linux {
             super::bindings::lgetxattr(
                 path.as_ptr(),
                 name.as_ptr(),
-                buffer.as_ptr() as *mut libc::c_void,
+                buffer.as_mut_ptr().cast(),
                 buffer_size as usize,
             )
         };
@@ -359,7 +359,7 @@ mod linux {
             super::bindings::fgetxattr(
                 fd,
                 name.as_ptr(),
-                buffer.as_ptr() as *mut libc::c_void,
+                buffer.as_mut_ptr().cast(),
                 buffer_size as usize,
             )
         };
@@ -476,7 +476,7 @@ mod linux {
             _ => return Err(Errno(libc::EINVAL)),
         };
 
-        let value_ptr = value.as_ref().as_ptr() as *mut libc::c_void;
+        let value_ptr = value.as_ref().as_ptr().cast();
         let value_len = value.as_ref().len();
 
         let res = unsafe {
@@ -520,7 +520,7 @@ mod linux {
             _ => return Err(Errno(libc::EINVAL)),
         };
 
-        let value_ptr = value.as_ref().as_ptr() as *mut libc::c_void;
+        let value_ptr = value.as_ref().as_ptr().cast();
         let value_len = value.as_ref().len();
 
         let res = unsafe {
@@ -558,7 +558,7 @@ mod linux {
             _ => return Err(Errno(libc::EINVAL)),
         };
 
-        let value_ptr = value.as_ref().as_ptr() as *mut libc::c_void;
+        let value_ptr = value.as_ref().as_ptr().cast();
         let value_len = value.as_ref().len();
 
         let res = unsafe {

@@ -35,13 +35,8 @@ pub fn extattr_delete_fd<S: AsRef<OsStr>>(
         _ => return Err(Errno(libc::EINVAL)),
     };
 
-    let res = unsafe {
-        libc::extattr_delete_fd(
-            fd,
-            namespace,
-            attr_name.as_ptr() as *mut libc::c_char,
-        )
-    };
+    let res =
+        unsafe { libc::extattr_delete_fd(fd, namespace, attr_name.as_ptr()) };
 
     match res {
         -1 => Err(errno()),
@@ -74,11 +69,7 @@ where
     };
 
     let res = unsafe {
-        libc::extattr_delete_file(
-            path.as_ptr() as *mut libc::c_char,
-            namespace,
-            attr_name.as_ptr() as *mut libc::c_char,
-        )
+        libc::extattr_delete_file(path.as_ptr(), namespace, attr_name.as_ptr())
     };
 
     match res {
@@ -112,11 +103,7 @@ where
     };
 
     let res = unsafe {
-        libc::extattr_delete_link(
-            path.as_ptr() as *mut libc::c_char,
-            namespace,
-            attr_name.as_ptr() as *mut libc::c_char,
-        )
+        libc::extattr_delete_link(path.as_ptr(), namespace, attr_name.as_ptr())
     };
 
     match res {
@@ -167,21 +154,20 @@ pub fn extattr_list_fd(
     let namespace = attrnamespace as libc::c_int;
 
     // query the buffer size
-    let buffer_size = match unsafe {
-        libc::extattr_list_fd(fd, namespace, null_mut() as *mut libc::c_void, 0)
-    } {
-        -1 => return Err(errno()),
-        0 => return Ok(Vec::new()),
-        size => size,
-    };
+    let buffer_size =
+        match unsafe { libc::extattr_list_fd(fd, namespace, null_mut(), 0) } {
+            -1 => return Err(errno()),
+            0 => return Ok(Vec::new()),
+            size => size,
+        };
 
-    let mut buffer = Vec::with_capacity(buffer_size as usize);
+    let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
 
     let res = unsafe {
         libc::extattr_list_fd(
             fd,
             namespace,
-            buffer.as_ptr() as *mut libc::c_void,
+            buffer.as_mut_ptr().cast(),
             buffer_size as libc::size_t,
         )
     };
@@ -214,25 +200,20 @@ where
 
     // query the buffer size
     let buffer_size = match unsafe {
-        libc::extattr_list_file(
-            path.as_ptr() as *mut libc::c_char,
-            namespace,
-            null_mut() as *mut libc::c_void,
-            0,
-        )
+        libc::extattr_list_file(path.as_ptr(), namespace, null_mut(), 0)
     } {
         -1 => return Err(errno()),
         0 => return Ok(Vec::new()),
         size => size,
     };
 
-    let mut buffer = Vec::with_capacity(buffer_size as usize);
+    let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
 
     let res = unsafe {
         libc::extattr_list_file(
-            path.as_ptr() as *mut libc::c_char,
+            path.as_ptr(),
             namespace,
-            buffer.as_ptr() as *mut libc::c_void,
+            buffer.as_mut_ptr().cast(),
             buffer_size as libc::size_t,
         )
     };
@@ -266,25 +247,20 @@ where
 
     // query the buffer size
     let buffer_size = match unsafe {
-        libc::extattr_list_link(
-            path.as_ptr() as *mut libc::c_char,
-            namespace,
-            null_mut() as *mut libc::c_void,
-            0,
-        )
+        libc::extattr_list_link(path.as_ptr(), namespace, null_mut(), 0)
     } {
         -1 => return Err(errno()),
         0 => return Ok(Vec::new()),
         size => size,
     };
 
-    let mut buffer = Vec::with_capacity(buffer_size as usize);
+    let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
 
     let res = unsafe {
         libc::extattr_list_link(
-            path.as_ptr() as *mut libc::c_char,
+            path.as_ptr(),
             namespace,
-            buffer.as_ptr() as *mut libc::c_void,
+            buffer.as_mut_ptr().cast(),
             buffer_size as libc::size_t,
         )
     };
@@ -315,26 +291,20 @@ pub fn extattr_get_fd<S: AsRef<OsStr>>(
 
     // query buffer size
     let buffer_size = match unsafe {
-        libc::extattr_get_fd(
-            fd,
-            namespace,
-            attrname.as_ptr() as *mut libc::c_char,
-            null_mut() as *mut libc::c_void,
-            0,
-        )
+        libc::extattr_get_fd(fd, namespace, attrname.as_ptr(), null_mut(), 0)
     } {
         -1 => return Err(errno()),
         0 => return Ok(Vec::new()),
         size => size,
     };
-    let mut buffer = Vec::with_capacity(buffer_size as usize);
+    let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
 
     let res = unsafe {
         libc::extattr_get_fd(
             fd,
             namespace,
-            attrname.as_ptr() as *mut libc::c_char,
-            null_mut() as *mut libc::c_void,
+            attrname.as_ptr(),
+            buffer.as_mut_ptr().cast(),
             0,
         )
     };
@@ -374,10 +344,10 @@ where
     // query buffer size
     let buffer_size = match unsafe {
         libc::extattr_get_file(
-            path.as_ptr() as *mut libc::c_char,
+            path.as_ptr(),
             namespace,
-            attrname.as_ptr() as *mut libc::c_char,
-            null_mut() as *mut libc::c_void,
+            attrname.as_ptr(),
+            null_mut(),
             0,
         )
     } {
@@ -385,14 +355,14 @@ where
         0 => return Ok(Vec::new()),
         size => size,
     };
-    let mut buffer = Vec::with_capacity(buffer_size as usize);
+    let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
 
     let res = unsafe {
         libc::extattr_get_file(
-            path.as_ptr() as *mut libc::c_char,
+            path.as_ptr(),
             namespace,
-            attrname.as_ptr() as *mut libc::c_char,
-            null_mut() as *mut libc::c_void,
+            attrname.as_ptr(),
+            buffer.as_mut_ptr().cast(),
             0,
         )
     };
@@ -433,10 +403,10 @@ where
     // query buffer size
     let buffer_size = match unsafe {
         libc::extattr_get_link(
-            path.as_ptr() as *mut libc::c_char,
+            path.as_ptr(),
             namespace,
-            attrname.as_ptr() as *mut libc::c_char,
-            null_mut() as *mut libc::c_void,
+            attrname.as_ptr(),
+            null_mut(),
             0,
         )
     } {
@@ -444,14 +414,14 @@ where
         0 => return Ok(Vec::new()),
         size => size,
     };
-    let mut buffer = Vec::with_capacity(buffer_size as usize);
+    let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
 
     let res = unsafe {
         libc::extattr_get_link(
-            path.as_ptr() as *mut libc::c_char,
+            path.as_ptr(),
             namespace,
-            attrname.as_ptr() as *mut libc::c_char,
-            null_mut() as *mut libc::c_void,
+            attrname.as_ptr(),
+            buffer.as_mut_ptr().cast(),
             0,
         )
     };
@@ -484,14 +454,14 @@ where
         Ok(n) => n,
         _ => return Err(Errno(libc::EINVAL)),
     };
-    let data_ptr = data.as_ref().as_ptr() as *mut libc::c_void;
+    let data_ptr = data.as_ref().as_ptr().cast();
     let data_len = data.as_ref().len();
 
     let res = unsafe {
         libc::extattr_set_fd(
             fd,
             namespace,
-            attrname.as_ptr() as *mut libc::c_char,
+            attrname.as_ptr(),
             data_ptr,
             data_len,
         )
@@ -528,14 +498,14 @@ where
         Ok(n) => n,
         _ => return Err(Errno(libc::EINVAL)),
     };
-    let data_ptr = data.as_ref().as_ptr() as *mut libc::c_void;
+    let data_ptr = data.as_ref().as_ptr().cast();
     let data_len = data.as_ref().len();
 
     let res = unsafe {
         libc::extattr_set_file(
-            path.as_ptr() as *mut libc::c_char,
+            path.as_ptr(),
             namespace,
-            attrname.as_ptr() as *mut libc::c_char,
+            attrname.as_ptr(),
             data_ptr,
             data_len,
         )
@@ -572,14 +542,14 @@ where
         Ok(n) => n,
         _ => return Err(Errno(libc::EINVAL)),
     };
-    let data_ptr = data.as_ref().as_ptr() as *mut libc::c_void;
+    let data_ptr = data.as_ref().as_ptr().cast();
     let data_len = data.as_ref().len();
 
     let res = unsafe {
         libc::extattr_set_link(
-            path.as_ptr() as *mut libc::c_char,
+            path.as_ptr(),
             namespace,
-            attrname.as_ptr() as *mut libc::c_char,
+            attrname.as_ptr(),
             data_ptr,
             data_len,
         )
@@ -603,7 +573,7 @@ mod test {
         assert_eq!(
             vec![
                 OsStr::new("attrname").to_owned(),
-                OsStr::new("anotherattrname").to_owned()
+                OsStr::new("anotherattrname").to_owned(),
             ],
             ret
         );

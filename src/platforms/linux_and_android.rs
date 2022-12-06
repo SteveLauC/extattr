@@ -44,7 +44,7 @@ pub fn listxattr<P: AsRef<Path>>(path: P) -> Result<Vec<OsString>> {
     let res = unsafe {
         libc::listxattr(
             path.as_ptr(),
-            buffer.as_ptr() as *mut libc::c_char,
+            buffer.as_mut_ptr().cast(),
             buffer.capacity(),
         )
     };
@@ -85,7 +85,7 @@ pub fn llistxattr<P: AsRef<Path>>(path: P) -> Result<Vec<OsString>> {
     let res = unsafe {
         libc::llistxattr(
             path.as_ptr(),
-            buffer.as_ptr() as *mut libc::c_char,
+            buffer.as_mut_ptr().cast(),
             buffer.capacity(),
         )
     };
@@ -117,11 +117,7 @@ pub fn flistxattr(fd: RawFd) -> Result<Vec<OsString>> {
 
     let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
     let res = unsafe {
-        libc::flistxattr(
-            fd,
-            buffer.as_ptr() as *mut libc::c_char,
-            buffer.capacity(),
-        )
+        libc::flistxattr(fd, buffer.as_mut_ptr().cast(), buffer.capacity())
     };
 
     match res {
@@ -171,7 +167,7 @@ where
         libc::getxattr(
             path.as_ptr(),
             name.as_ptr(),
-            buffer.as_ptr() as *mut libc::c_void,
+            buffer.as_mut_ptr().cast(),
             buffer_size as usize,
         )
     };
@@ -219,7 +215,7 @@ where
         libc::lgetxattr(
             path.as_ptr(),
             name.as_ptr(),
-            buffer.as_ptr() as *mut libc::c_void,
+            buffer.as_mut_ptr().cast(),
             buffer_size as usize,
         )
     };
@@ -261,7 +257,7 @@ where
         libc::fgetxattr(
             fd,
             name.as_ptr(),
-            buffer.as_ptr() as *mut libc::c_void,
+            buffer.as_mut_ptr().cast(),
             buffer_size as usize,
         )
     };
@@ -369,7 +365,7 @@ where
         _ => return Err(Errno(libc::EINVAL)),
     };
 
-    let value_ptr = value.as_ref().as_ptr() as *mut libc::c_void;
+    let value_ptr = value.as_ref().as_ptr().cast();
     let value_len = value.as_ref().len();
 
     let res = unsafe {
@@ -413,7 +409,7 @@ where
         _ => return Err(Errno(libc::EINVAL)),
     };
 
-    let value_ptr = value.as_ref().as_ptr() as *mut libc::c_void;
+    let value_ptr = value.as_ref().as_ptr().cast();
     let value_len = value.as_ref().len();
 
     let res = unsafe {
@@ -446,7 +442,7 @@ where
         _ => return Err(Errno(libc::EINVAL)),
     };
 
-    let value_ptr = value.as_ref().as_ptr() as *mut libc::c_void;
+    let value_ptr = value.as_ref().as_ptr().cast();
     let value_len = value.as_ref().len();
 
     let res = unsafe {

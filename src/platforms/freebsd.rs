@@ -35,13 +35,8 @@ pub fn extattr_delete_fd<S: AsRef<OsStr>>(
         _ => return Err(Errno(libc::EINVAL)),
     };
 
-    let res = unsafe {
-        libc::extattr_delete_fd(
-            fd,
-            namespace,
-            attr_name.as_ptr(),
-        )
-    };
+    let res =
+        unsafe { libc::extattr_delete_fd(fd, namespace, attr_name.as_ptr()) };
 
     match res {
         -1 => Err(errno()),
@@ -59,9 +54,9 @@ pub fn extattr_delete_file<P, S>(
     attrnamespace: AttrNamespace,
     attrname: S,
 ) -> Result<()>
-    where
-        P: AsRef<Path>,
-        S: AsRef<OsStr>,
+where
+    P: AsRef<Path>,
+    S: AsRef<OsStr>,
 {
     let path = match CString::new(path.as_ref().as_os_str().as_bytes()) {
         Ok(p) => p,
@@ -74,11 +69,7 @@ pub fn extattr_delete_file<P, S>(
     };
 
     let res = unsafe {
-        libc::extattr_delete_file(
-            path.as_ptr(),
-            namespace,
-            attr_name.as_ptr(),
-        )
+        libc::extattr_delete_file(path.as_ptr(), namespace, attr_name.as_ptr())
     };
 
     match res {
@@ -97,9 +88,9 @@ pub fn extattr_delete_link<P, S>(
     attrnamespace: AttrNamespace,
     attrname: S,
 ) -> Result<()>
-    where
-        P: AsRef<Path>,
-        S: AsRef<OsStr>,
+where
+    P: AsRef<Path>,
+    S: AsRef<OsStr>,
 {
     let path = match CString::new(path.as_ref().as_os_str().as_bytes()) {
         Ok(p) => p,
@@ -112,11 +103,7 @@ pub fn extattr_delete_link<P, S>(
     };
 
     let res = unsafe {
-        libc::extattr_delete_link(
-            path.as_ptr(),
-            namespace,
-            attr_name.as_ptr(),
-        )
+        libc::extattr_delete_link(path.as_ptr(), namespace, attr_name.as_ptr())
     };
 
     match res {
@@ -167,13 +154,12 @@ pub fn extattr_list_fd(
     let namespace = attrnamespace as libc::c_int;
 
     // query the buffer size
-    let buffer_size = match unsafe {
-        libc::extattr_list_fd(fd, namespace, null_mut(), 0)
-    } {
-        -1 => return Err(errno()),
-        0 => return Ok(Vec::new()),
-        size => size,
-    };
+    let buffer_size =
+        match unsafe { libc::extattr_list_fd(fd, namespace, null_mut(), 0) } {
+            -1 => return Err(errno()),
+            0 => return Ok(Vec::new()),
+            size => size,
+        };
 
     let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
 
@@ -203,8 +189,8 @@ pub fn extattr_list_file<P>(
     path: P,
     attrnamespace: AttrNamespace,
 ) -> Result<Vec<OsString>>
-    where
-        P: AsRef<Path>,
+where
+    P: AsRef<Path>,
 {
     let path = match CString::new(path.as_ref().as_os_str().as_bytes()) {
         Ok(p) => p,
@@ -214,12 +200,7 @@ pub fn extattr_list_file<P>(
 
     // query the buffer size
     let buffer_size = match unsafe {
-        libc::extattr_list_file(
-            path.as_ptr(),
-            namespace,
-            null_mut(),
-            0,
-        )
+        libc::extattr_list_file(path.as_ptr(), namespace, null_mut(), 0)
     } {
         -1 => return Err(errno()),
         0 => return Ok(Vec::new()),
@@ -255,8 +236,8 @@ pub fn extattr_list_link<P>(
     path: P,
     attrnamespace: AttrNamespace,
 ) -> Result<Vec<OsString>>
-    where
-        P: AsRef<Path>,
+where
+    P: AsRef<Path>,
 {
     let path = match CString::new(path.as_ref().as_os_str().as_bytes()) {
         Ok(p) => p,
@@ -266,12 +247,7 @@ pub fn extattr_list_link<P>(
 
     // query the buffer size
     let buffer_size = match unsafe {
-        libc::extattr_list_link(
-            path.as_ptr(),
-            namespace,
-            null_mut(),
-            0,
-        )
+        libc::extattr_list_link(path.as_ptr(), namespace, null_mut(), 0)
     } {
         -1 => return Err(errno()),
         0 => return Ok(Vec::new()),
@@ -315,13 +291,7 @@ pub fn extattr_get_fd<S: AsRef<OsStr>>(
 
     // query buffer size
     let buffer_size = match unsafe {
-        libc::extattr_get_fd(
-            fd,
-            namespace,
-            attrname.as_ptr(),
-            null_mut(),
-            0,
-        )
+        libc::extattr_get_fd(fd, namespace, attrname.as_ptr(), null_mut(), 0)
     } {
         -1 => return Err(errno()),
         0 => return Ok(Vec::new()),
@@ -357,9 +327,9 @@ pub fn extattr_get_file<P, S>(
     attrnamespace: AttrNamespace,
     attrname: S,
 ) -> Result<Vec<u8>>
-    where
-        P: AsRef<Path>,
-        S: AsRef<OsStr>,
+where
+    P: AsRef<Path>,
+    S: AsRef<OsStr>,
 {
     let path = match CString::new(path.as_ref().as_os_str().as_bytes()) {
         Ok(p) => p,
@@ -416,9 +386,9 @@ pub fn extattr_get_link<P, S>(
     attrnamespace: AttrNamespace,
     attrname: S,
 ) -> Result<Vec<u8>>
-    where
-        P: AsRef<Path>,
-        S: AsRef<OsStr>,
+where
+    P: AsRef<Path>,
+    S: AsRef<OsStr>,
 {
     let path = match CString::new(path.as_ref().as_os_str().as_bytes()) {
         Ok(p) => p,
@@ -475,9 +445,9 @@ pub fn extattr_set_fd<S, B>(
     attrname: S,
     data: B,
 ) -> Result<()>
-    where
-        S: AsRef<OsStr>,
-        B: AsRef<[u8]>,
+where
+    S: AsRef<OsStr>,
+    B: AsRef<[u8]>,
 {
     let namespace = attrnamespace as libc::c_int;
     let attrname = match CString::new(attrname.as_ref().as_bytes()) {
@@ -514,10 +484,10 @@ pub fn extattr_set_file<P, S, B>(
     attrname: S,
     data: B,
 ) -> Result<()>
-    where
-        P: AsRef<Path>,
-        S: AsRef<OsStr>,
-        B: AsRef<[u8]>,
+where
+    P: AsRef<Path>,
+    S: AsRef<OsStr>,
+    B: AsRef<[u8]>,
 {
     let path = match CString::new(path.as_ref().as_os_str().as_bytes()) {
         Ok(n) => n,
@@ -558,10 +528,10 @@ pub fn extattr_set_link<P, S, B>(
     attrname: S,
     data: B,
 ) -> Result<()>
-    where
-        P: AsRef<Path>,
-        S: AsRef<OsStr>,
-        B: AsRef<[u8]>,
+where
+    P: AsRef<Path>,
+    S: AsRef<OsStr>,
+    B: AsRef<[u8]>,
 {
     let path = match CString::new(path.as_ref().as_os_str().as_bytes()) {
         Ok(n) => n,

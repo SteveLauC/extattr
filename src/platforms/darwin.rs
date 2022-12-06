@@ -193,14 +193,7 @@ pub fn fgetxattr<S: AsRef<OsStr>>(
 
     // query the buffer size
     let buffer_size = match unsafe {
-        libc::fgetxattr(
-            fd,
-            name.as_ptr(),
-            null_mut(),
-            0,
-            position,
-            options,
-        )
+        libc::fgetxattr(fd, name.as_ptr(), null_mut(), 0, position, options)
     } {
         -1 => return Err(errno()),
         0 => return Ok(Vec::new()),
@@ -249,13 +242,8 @@ where
     };
     let options = options.bits();
 
-    let res = unsafe {
-        libc::removexattr(
-            path.as_ptr(),
-            name.as_ptr(),
-            options,
-        )
-    };
+    let res =
+        unsafe { libc::removexattr(path.as_ptr(), name.as_ptr(), options) };
 
     match res {
         -1 => Err(errno()),

@@ -1007,7 +1007,9 @@ mod test_darwin {
 
         assert!(listxattr(temp_link_path.as_path(), Options::XATTR_NOFOLLOW)
             .unwrap()
-            .contains(&(String::from("user.test_listxattr_xattr_no_follow").into())));
+            .contains(
+                &(String::from("user.test_listxattr_xattr_no_follow").into())
+            ));
     }
 
     #[test]

@@ -122,15 +122,15 @@ mod linux {
         } {
             -1 => return Err(errno()),
             0 => return Ok(Vec::new()),
-            buffer_size => buffer_size,
+            buffer_size => buffer_size as usize,
         };
 
-        let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
+        let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size);
         let res = unsafe {
             super::bindings::listxattr(
                 path.as_ptr(),
                 buffer.as_mut_ptr().cast(),
-                buffer.capacity(),
+                buffer_size,
             )
         };
 
@@ -164,15 +164,15 @@ mod linux {
         } {
             -1 => return Err(errno()),
             0 => return Ok(Vec::new()),
-            buffer_size => buffer_size,
+            buffer_size => buffer_size as usize,
         };
 
-        let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
+        let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size);
         let res = unsafe {
             super::bindings::llistxattr(
                 path.as_ptr(),
                 buffer.as_mut_ptr().cast(),
-                buffer.capacity(),
+                buffer_size,
             )
         };
 
@@ -199,15 +199,15 @@ mod linux {
             match unsafe { super::bindings::flistxattr(fd, null_mut(), 0) } {
                 -1 => return Err(errno()),
                 0 => return Ok(Vec::new()),
-                buffer_size => buffer_size,
+                buffer_size => buffer_size as usize,
             };
 
-        let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
+        let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size);
         let res = unsafe {
             super::bindings::flistxattr(
                 fd,
                 buffer.as_mut_ptr().cast(),
-                buffer.capacity(),
+                buffer_size,
             )
         };
 
@@ -254,17 +254,17 @@ mod linux {
         } {
             -1 => return Err(errno()),
             0 => return Ok(Vec::new()),
-            buffer_size => buffer_size,
+            buffer_size => buffer_size as usize,
         };
 
-        let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
+        let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size);
 
         let res = unsafe {
             super::bindings::getxattr(
                 path.as_ptr(),
                 name.as_ptr(),
                 buffer.as_mut_ptr().cast(),
-                buffer_size as usize,
+                buffer_size,
             )
         };
 
@@ -307,17 +307,17 @@ mod linux {
         } {
             -1 => return Err(errno()),
             0 => return Ok(Vec::new()),
-            buffer_size => buffer_size,
+            buffer_size => buffer_size as usize,
         };
 
-        let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
+        let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size);
 
         let res = unsafe {
             super::bindings::lgetxattr(
                 path.as_ptr(),
                 name.as_ptr(),
                 buffer.as_mut_ptr().cast(),
-                buffer_size as usize,
+                buffer_size,
             )
         };
 
@@ -350,17 +350,17 @@ mod linux {
         } {
             -1 => return Err(errno()),
             0 => return Ok(Vec::new()),
-            buffer_size => buffer_size,
+            buffer_size => buffer_size as usize,
         };
 
-        let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
+        let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size);
 
         let res = unsafe {
             super::bindings::fgetxattr(
                 fd,
                 name.as_ptr(),
                 buffer.as_mut_ptr().cast(),
-                buffer_size as usize,
+                buffer_size,
             )
         };
 

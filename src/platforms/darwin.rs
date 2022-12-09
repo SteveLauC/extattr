@@ -45,15 +45,15 @@ pub fn listxattr<P: AsRef<Path>>(
         {
             -1 => return Err(errno()),
             0 => return Ok(Vec::new()),
-            buffer_size => buffer_size,
+            buffer_size => buffer_size as usize,
         };
 
-    let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
+    let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size);
     let res = unsafe {
         libc::listxattr(
             path.as_ptr(),
             buffer.as_mut_ptr().cast(),
-            buffer.capacity(),
+            buffer_size,
             options,
         )
     };
@@ -84,17 +84,12 @@ pub fn flistxattr(fd: RawFd, options: Options) -> Result<Vec<OsString>> {
         match unsafe { libc::flistxattr(fd, null_mut(), 0, options) } {
             -1 => return Err(errno()),
             0 => return Ok(Vec::new()),
-            buffer_size => buffer_size,
+            buffer_size => buffer_size as usize,
         };
 
-    let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
+    let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size);
     let res = unsafe {
-        libc::flistxattr(
-            fd,
-            buffer.as_mut_ptr().cast(),
-            buffer.capacity(),
-            options,
-        )
+        libc::flistxattr(fd, buffer.as_mut_ptr().cast(), buffer_size, options)
     };
 
     match res {
@@ -148,17 +143,17 @@ where
     } {
         -1 => return Err(errno()),
         0 => return Ok(Vec::new()),
-        buffer_size => buffer_size,
+        buffer_size => buffer_size as usize,
     };
 
-    let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
+    let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size);
 
     let res = unsafe {
         libc::getxattr(
             path.as_ptr(),
             name.as_ptr(),
             buffer.as_mut_ptr().cast(),
-            buffer_size as usize,
+            buffer_size,
             position,
             options,
         )
@@ -197,17 +192,17 @@ pub fn fgetxattr<S: AsRef<OsStr>>(
     } {
         -1 => return Err(errno()),
         0 => return Ok(Vec::new()),
-        buffer_size => buffer_size,
+        buffer_size => buffer_size as usize,
     };
 
-    let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size as usize);
+    let mut buffer: Vec<u8> = Vec::with_capacity(buffer_size);
 
     let res = unsafe {
         libc::fgetxattr(
             fd,
             name.as_ptr(),
             buffer.as_mut_ptr().cast(),
-            buffer_size as usize,
+            buffer_size,
             position,
             options,
         )

@@ -17,7 +17,7 @@ mod linux_android {
         let res = setxattr(
             temp_file_path.as_path(),
             "user.test_setxattr_file_exist",
-            "",
+            "test_setxattr_file_exist",
             Flags::empty(),
         );
 
@@ -38,7 +38,7 @@ mod linux_android {
         let res = setxattr(
             temp_file_path.as_path(),
             "user.test_setxattr_file_not_exist",
-            "",
+            "test_setxattr_file_not_exist",
             Flags::empty(),
         );
 
@@ -56,7 +56,7 @@ mod linux_android {
         let res_set = setxattr(
             temp_file_path.as_path(),
             "user.test_setxattr_xattr_create",
-            "",
+            "test_setxattr_xattr_create",
             Flags::empty(),
         );
 
@@ -69,7 +69,7 @@ mod linux_android {
         let res = setxattr(
             temp_file_path.as_path(),
             "user.test_setxattr_xattr_create",
-            "",
+            "test_setxattr_xattr_create",
             Flags::XATTR_CREATE,
         );
 
@@ -87,7 +87,7 @@ mod linux_android {
         let res = setxattr(
             temp_file_path.as_path(),
             "user.test_setxattr_xattr_replace",
-            "",
+            "test_setxattr_xattr_replace",
             Flags::XATTR_REPLACE,
         );
 
@@ -107,8 +107,9 @@ mod linux_android {
 
         let res = setxattr(
             temp_file_path.as_path(),
+            // "xxxx" is not a valid namespace
             "xxxx.test_setxattr_invalid_namespace",
-            "",
+            "test_setxattr_invalid_namespace",
             Flags::empty(),
         );
 
@@ -122,8 +123,12 @@ mod linux_android {
         let temp_file = File::create(temp_file_path.as_path()).unwrap();
         let temp_file_fd = temp_file.as_raw_fd();
 
-        let res =
-            fsetxattr(temp_file_fd, "user.test_fsetxattr", "", Flags::empty());
+        let res = fsetxattr(
+            temp_file_fd,
+            "user.test_fsetxattr",
+            "test_fsetxattr",
+            Flags::empty(),
+        );
 
         match res {
             // The underlying file system does not support EA, skip this test.
@@ -139,13 +144,23 @@ mod linux_android {
         let temp_file_path = temp_dir.path().join("test_listxattr");
         File::create(temp_file_path.as_path()).unwrap();
 
+        setxattr(
+            temp_file_path.as_path(),
+            "user.test_listxattr",
+            "test_listxattr",
+            Flags::empty(),
+        )
+        .unwrap();
+
         let res = listxattr(temp_file_path.as_path());
 
         match res {
             // The underlying file system does not support EA, skip this test.
             Err(Errno(libc::ENOTSUP)) => {}
             // If EA is supported, then no error should occur
-            _ => assert!(res.is_ok()),
+            _ => assert!(res
+                .unwrap()
+                .contains(&(String::from("user.test_listxattr").into()))),
         }
     }
 
@@ -156,13 +171,23 @@ mod linux_android {
         let temp_file = File::create(temp_file_path.as_path()).unwrap();
         let temp_file_fd = temp_file.as_raw_fd();
 
+        setxattr(
+            temp_file_path.as_path(),
+            "user.test_flistxattr",
+            "test_flistxattr",
+            Flags::empty(),
+        )
+        .unwrap();
+
         let res = flistxattr(temp_file_fd);
 
         match res {
             // The underlying file system does not support EA, skip this test.
             Err(Errno(libc::ENOTSUP)) => {}
             // If EA is supported, then no error should occur
-            _ => assert!(res.is_ok()),
+            _ => assert!(res
+                .unwrap()
+                .contains(&(String::from("user.test_flistxattr").into()))),
         }
     }
 
@@ -175,7 +200,7 @@ mod linux_android {
         let res = setxattr(
             temp_file_path.as_path(),
             "user.test_getxattr",
-            "",
+            "test_getxattr",
             Flags::empty(),
         );
 
@@ -188,8 +213,8 @@ mod linux_android {
         assert!(res.is_ok());
 
         assert_eq!(
-            Ok(Vec::new()),
-            getxattr(temp_file_path.as_path(), "user.test_getxattr")
+            "test_getxattr".as_bytes(),
+            &getxattr(temp_file_path.as_path(), "user.test_getxattr").unwrap()
         );
     }
 
@@ -217,11 +242,15 @@ mod linux_android {
     fn test_fgetxattr() {
         let temp_dir = tempfile::tempdir_in("./").unwrap();
         let temp_file_path = temp_dir.path().join("test_fgetxattr");
-        let temp_file = File::create(temp_file_path).unwrap();
+        let temp_file = File::create(temp_file_path.as_path()).unwrap();
         let temp_file_fd = temp_file.as_raw_fd();
 
-        let res =
-            fsetxattr(temp_file_fd, "user.test_fgetxattr", "", Flags::empty());
+        let res = fsetxattr(
+            temp_file_fd,
+            "user.test_fgetxattr",
+            "test_fgetxattr",
+            Flags::empty(),
+        );
 
         // The underlying file system does not support EA, skip this test.
         if let Err(Errno(libc::ENOTSUP)) = res {
@@ -232,8 +261,8 @@ mod linux_android {
         assert!(res.is_ok());
 
         assert_eq!(
-            Ok(Vec::new()),
-            fgetxattr(temp_file_fd, "user.test_fgetxattr")
+            "test_fgetxattr".as_bytes(),
+            &fgetxattr(temp_file_fd, "user.test_fgetxattr").unwrap()
         );
     }
 
@@ -243,10 +272,15 @@ mod linux_android {
         let temp_file_path = temp_dir.path().join("test_removexattr_ea_exist");
         File::create(temp_file_path.as_path()).unwrap();
 
+        // Here, we use `setxattr(path, "user.*", value, flags)` instead of `listxattr`
+        // to test if EA is supported because on some file system (e.g., tmpfs), `user`
+        // EA is not supported but `trusted` and `security` EA are. Since we test
+        // `removexattr` using `user` EA, we need to know if `user` EA is supported on
+        // the underlying file system.
         let res = setxattr(
             temp_file_path.as_path(),
             "user.test_removexattr_ea_exist",
-            "",
+            "test_removexattr_ex_exist",
             Flags::empty(),
         );
 
@@ -278,7 +312,7 @@ mod linux_android {
         // `removexattr` using `user` EA, we need to know if `user` EA is supported on
         // the underlying file system.
         if let Err(Errno(libc::ENOTSUP)) =
-            setxattr(temp_file_path.as_path(), "user.ea", "", Flags::empty())
+            setxattr(temp_file_path.as_path(), "user.ea", "ea", Flags::empty())
         {
             // The underlying file system does not support user EA, skip this test.
             return;
@@ -300,10 +334,15 @@ mod linux_android {
         let temp_file = File::create(temp_file_path.as_path()).unwrap();
         let temp_file_fd = temp_file.as_raw_fd();
 
+        // Here, we use `fsetxattr(path, "user.*", value, flags)` instead of `flistxattr`
+        // to test if EA is supported because on some file system (e.g., tmpfs), `user`
+        // EA is not supported but `trusted` and `security` EA are. Since we test
+        // `removexattr` using `user` EA, we need to know if `user` EA is supported on
+        // the underlying file system.
         let res = fsetxattr(
             temp_file_fd,
             "user.test_fremovexattr",
-            "",
+            "test_fremovexattr",
             Flags::empty(),
         );
 
@@ -341,7 +380,7 @@ mod freebsd {
             temp_file_path.as_path(),
             AttrNamespace::EXTATTR_NAMESPACE_USER,
             "test_extattr_set_file_file_exist",
-            "",
+            "test_extattr_set_file_file_exist",
         )
         .unwrap();
     }
@@ -357,7 +396,7 @@ mod freebsd {
                 temp_file_path.as_path(),
                 AttrNamespace::EXTATTR_NAMESPACE_USER,
                 "test_extattr_set_file_file_not_exist",
-                "",
+                "test_extattr_set_file_file_not_exist",
             ),
             Err(Errno(libc::ENOENT))
         );
@@ -374,7 +413,7 @@ mod freebsd {
             temp_file_fd,
             AttrNamespace::EXTATTR_NAMESPACE_USER,
             "test_extattr_set_fd",
-            "",
+            "test_extattr_set_fd",
         )
         .unwrap();
     }
@@ -385,11 +424,20 @@ mod freebsd {
         let temp_file_path = temp_dir.path().join("test_extattr_list_file");
         File::create(temp_file_path.as_path()).unwrap();
 
-        extattr_list_file(
+        extattr_set_file(
+            temp_file_path.as_path(),
+            AttrNamespace::EXTATTR_NAMESPACE_USER,
+            "test_extattr_list_file",
+            "test_extattr_list_file",
+        )
+        .unwrap();
+
+        assert!(extattr_list_file(
             temp_file_path.as_path(),
             AttrNamespace::EXTATTR_NAMESPACE_USER,
         )
-        .unwrap();
+        .unwrap()
+        .contains(&(String::from("test_extattr_list_file").into())));
     }
 
     #[test]
@@ -399,8 +447,20 @@ mod freebsd {
         let temp_file = File::create(temp_file_path.as_path()).unwrap();
         let temp_file_fd = temp_file.as_raw_fd();
 
-        extattr_list_fd(temp_file_fd, AttrNamespace::EXTATTR_NAMESPACE_USER)
-            .unwrap();
+        extattr_set_fd(
+            temp_file_fd,
+            AttrNamespace::EXTATTR_NAMESPACE_USER,
+            "test_extattr_list_fd",
+            "test_extattr_list_fd",
+        )
+        .unwrap();
+
+        assert!(extattr_list_fd(
+            temp_file_fd,
+            AttrNamespace::EXTATTR_NAMESPACE_USER
+        )
+        .unwrap()
+        .contains(&(String::from("test_extattr_list_fd").into())));
     }
 
     #[test]
@@ -413,17 +473,18 @@ mod freebsd {
             temp_file_path.as_path(),
             AttrNamespace::EXTATTR_NAMESPACE_USER,
             "test_extattr_get_file",
-            "",
+            "test_extattr_get_file",
         )
         .unwrap();
 
         assert_eq!(
-            Ok(Vec::new()),
-            extattr_get_file(
+            "test_extattr_get_file".as_bytes(),
+            &extattr_get_file(
                 temp_file_path.as_path(),
                 AttrNamespace::EXTATTR_NAMESPACE_USER,
                 "test_extattr_get_file",
             )
+            .unwrap()
         );
     }
 
@@ -438,17 +499,18 @@ mod freebsd {
             temp_file_fd,
             AttrNamespace::EXTATTR_NAMESPACE_USER,
             "test_extattr_get_fd",
-            "",
+            "test_extattr_get_fd",
         )
         .unwrap();
 
         assert_eq!(
-            Ok(Vec::new()),
+            "test_extattr_get_fd".as_bytes(),
             extattr_get_fd(
                 temp_file_fd,
                 AttrNamespace::EXTATTR_NAMESPACE_USER,
                 "test_extattr_get_fd",
             )
+            .unwrap()
         );
     }
 
@@ -461,7 +523,7 @@ mod freebsd {
 
         assert_eq!(
             extattr_get_file(
-                temp_file_path,
+                temp_file_path.as_path(),
                 AttrNamespace::EXTATTR_NAMESPACE_USER,
                 "test_extattr_get_file_ea_not_exist",
             ),
@@ -480,7 +542,7 @@ mod freebsd {
             temp_file_path.as_path(),
             AttrNamespace::EXTATTR_NAMESPACE_USER,
             "test_extattr_delete_file_ea_exist",
-            "",
+            "test_extattr_delete_file_ea_exist",
         )
         .unwrap();
 
@@ -521,7 +583,7 @@ mod freebsd {
             temp_file_fd,
             AttrNamespace::EXTATTR_NAMESPACE_USER,
             "test_extattr_delete_fd",
-            "",
+            "test_extattr_delete_fd",
         )
         .unwrap();
 
@@ -553,7 +615,7 @@ mod test_darwin {
         let res = setxattr(
             temp_file_path.as_path(),
             "user.test_setxattr_file_exist",
-            "",
+            "test_setxattr_file_exist",
             0,
             Options::empty(),
         );
@@ -575,7 +637,7 @@ mod test_darwin {
         let res = setxattr(
             temp_file_path.as_path(),
             "user.test_setxattr_file_not_exist",
-            "",
+            "test_setxattr_file_not_exist",
             0,
             Options::empty(),
         );
@@ -594,7 +656,7 @@ mod test_darwin {
         let res_set = setxattr(
             temp_file_path.as_path(),
             "user.test_setxattr_xattr_create",
-            "",
+            "test_setxattr_xattr_create",
             0,
             Options::empty(),
         );
@@ -608,7 +670,7 @@ mod test_darwin {
         let res = setxattr(
             temp_file_path.as_path(),
             "user.test_setxattr_xattr_create",
-            "",
+            "test_setxattr_xattr_create",
             0,
             Options::XATTR_CREATE,
         );
@@ -627,7 +689,7 @@ mod test_darwin {
         let res = setxattr(
             temp_file_path.as_path(),
             "user.test_setxattr_xattr_replace",
-            "",
+            "test_setxattr_xattr_replace",
             0,
             Options::XATTR_REPLACE,
         );
@@ -649,7 +711,7 @@ mod test_darwin {
         let res = fsetxattr(
             temp_file_fd,
             "user.test_fsetxattr",
-            "",
+            "test_fsetxattr",
             0,
             Options::empty(),
         );
@@ -668,13 +730,24 @@ mod test_darwin {
         let temp_file_path = temp_dir.path().join("test_listxattr");
         File::create(temp_file_path.as_path()).unwrap();
 
+        setxattr(
+            temp_file_path.as_path(),
+            "user.test_listxattr",
+            "test_listxattr",
+            0,
+            Options::empty(),
+        )
+        .unwrap();
+
         let res = listxattr(temp_file_path.as_path(), Options::empty());
 
         match res {
             // The underlying file system does not support EA, skip this test.
             Err(Errno(libc::ENOTSUP)) => {}
             // If EA is supported, then no error should occur
-            _ => assert!(res.is_ok()),
+            _ => assert!(res
+                .unwrap()
+                .contains(&(String::from("user.test_listxattr").into()))),
         }
     }
 
@@ -685,13 +758,24 @@ mod test_darwin {
         let temp_file = File::create(temp_file_path.as_path()).unwrap();
         let temp_file_fd = temp_file.as_raw_fd();
 
+        setxattr(
+            temp_file_path.as_path(),
+            "user.test_flistxattr",
+            "test_flistxattr",
+            0,
+            Options::empty(),
+        )
+        .unwrap();
+
         let res = flistxattr(temp_file_fd, Options::empty());
 
         match res {
             // The underlying file system does not support EA, skip this test.
             Err(Errno(libc::ENOTSUP)) => {}
             // If EA is supported, then no error should occur
-            _ => assert!(res.is_ok()),
+            _ => assert!(res
+                .unwrap()
+                .contains(&(String::from("user.test_flistxattr").into()))),
         }
     }
 
@@ -704,7 +788,7 @@ mod test_darwin {
         let res = setxattr(
             temp_file_path.as_path(),
             "user.test_getxattr",
-            "",
+            "test_getxattr",
             0,
             Options::empty(),
         );
@@ -718,13 +802,14 @@ mod test_darwin {
         assert!(res.is_ok());
 
         assert_eq!(
-            Ok(Vec::new()),
+            "test_getxattr".as_bytes(),
             getxattr(
                 temp_file_path.as_path(),
                 "user.test_getxattr",
                 0,
-                Options::empty()
+                Options::empty(),
             )
+            .unwrap(),
         );
     }
 
@@ -754,13 +839,13 @@ mod test_darwin {
     fn test_fgetxattr() {
         let temp_dir = tempfile::tempdir_in("./").unwrap();
         let temp_file_path = temp_dir.path().join("test_fgetxattr");
-        let temp_file = File::create(temp_file_path).unwrap();
+        let temp_file = File::create(temp_file_path.as_path()).unwrap();
         let temp_file_fd = temp_file.as_raw_fd();
 
         let res = fsetxattr(
             temp_file_fd,
             "user.test_fgetxattr",
-            "",
+            "test_fgetxattr",
             0,
             Options::empty(),
         );
@@ -774,8 +859,9 @@ mod test_darwin {
         assert!(res.is_ok());
 
         assert_eq!(
-            Ok(Vec::new()),
+            "test_fgetxattr".as_bytes(),
             fgetxattr(temp_file_fd, "user.test_fgetxattr", 0, Options::empty())
+                .unwrap()
         );
     }
 
@@ -788,7 +874,7 @@ mod test_darwin {
         let res = setxattr(
             temp_file_path.as_path(),
             "user.test_removexattr_ea_exist",
-            "",
+            "test_removexattr_ea_exist",
             0,
             Options::empty(),
         );
@@ -824,7 +910,7 @@ mod test_darwin {
         if let Err(Errno(libc::ENOTSUP)) = setxattr(
             temp_file_path.as_path(),
             "user.ea",
-            "",
+            "ea",
             0,
             Options::empty(),
         ) {
@@ -852,7 +938,7 @@ mod test_darwin {
         let res = fsetxattr(
             temp_file_fd,
             "user.test_fremovexattr",
-            "",
+            "test_fremovexattr",
             0,
             Options::empty(),
         );
@@ -868,7 +954,7 @@ mod test_darwin {
         assert!(fremovexattr(
             temp_file_fd,
             "user.test_fremovexattr",
-            Options::empty()
+            Options::empty(),
         )
         .is_ok());
     }

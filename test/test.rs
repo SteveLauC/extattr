@@ -1,10 +1,21 @@
+/// A helper function used to create a symlink for `target`, the path of that link
+/// will be `target` + "link" (e.g., if `target` has path `/home/steve/file`, then
+/// the link will be `/home/steve/file_link`.
+fn create_link<P: AsRef<std::path::Path>>(target: P) -> std::path::PathBuf {
+    let link_path = target.as_ref().parent().unwrap().join("link");
+    assert!(target.as_ref().is_file());
+    std::os::unix::fs::symlink(target.as_ref(), link_path.as_path()).unwrap();
+    link_path
+}
+
 #[cfg(test)]
 #[cfg(any(target_os = "linux", target_os = "android"))]
 mod linux_android {
     use errno::Errno;
     use extattr::{
-        fgetxattr, flistxattr, fremovexattr, fsetxattr, getxattr, listxattr,
-        removexattr, setxattr, Flags,
+        fgetxattr, flistxattr, fremovexattr, fsetxattr, getxattr, lgetxattr,
+        listxattr, llistxattr, lremovexattr, lsetxattr, removexattr, setxattr,
+        Flags,
     };
     use std::{fs::File, os::unix::io::AsRawFd};
 
@@ -25,7 +36,7 @@ mod linux_android {
             // The underlying file system does not support EA, skip this test.
             Err(Errno(libc::ENOTSUP)) => {}
             // If EA is supported, then no error should occur
-            _ => assert!(res.is_ok()),
+            _ => res.unwrap(),
         }
     }
 
@@ -134,7 +145,32 @@ mod linux_android {
             // The underlying file system does not support EA, skip this test.
             Err(Errno(libc::ENOTSUP)) => {}
             // If EA is supported, then no error should occur
-            _ => assert!(res.is_ok()),
+            _ => res.unwrap(),
+        }
+    }
+
+    #[test]
+    fn test_lsetxattr() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path = temp_dir.path().join("test_lsetxattr");
+        File::create(temp_file_path.as_path()).unwrap();
+        let temp_link_path = super::create_link(temp_file_path.as_path());
+
+        let res = lsetxattr(
+            temp_link_path.as_path(),
+            "user.test_lsetxattr",
+            "test_lsetxattr",
+            Flags::empty(),
+        );
+
+        match res {
+            // The underlying file system does not support EA, skip this test.
+            Err(Errno(libc::ENOTSUP)) => {}
+            // User EA can be used only on:
+            // 1. Regular files
+            // 2. Directories
+            // Trying to set a user EA on a symlink is not permitted.
+            _ => assert_eq!(res, Err(Errno(libc::EPERM))),
         }
     }
 
@@ -192,6 +228,24 @@ mod linux_android {
     }
 
     #[test]
+    fn test_llistxattr() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path = temp_dir.path().join("test_llistxattr");
+        File::create(temp_file_path.as_path()).unwrap();
+        let temp_link_path = super::create_link(temp_file_path.as_path());
+
+        // Since we can NOT set user EA on a symlink, in this test, we simply
+        // call `llistxattr(2)`.
+        let res = llistxattr(temp_link_path.as_path());
+
+        match res {
+            // The underlying file system does not support EA, skip this test.
+            Err(Errno(libc::ENOTSUP)) => {}
+            _ => assert!(res.is_ok()),
+        }
+    }
+
+    #[test]
     fn test_getxattr() {
         let temp_dir = tempfile::tempdir_in("./").unwrap();
         let temp_file_path = temp_dir.path().join("test_getxattr");
@@ -210,7 +264,7 @@ mod linux_android {
         }
 
         // If EA is supported, then no error should occur
-        assert!(res.is_ok());
+        res.unwrap();
 
         assert_eq!(
             "test_getxattr".as_bytes(),
@@ -258,12 +312,29 @@ mod linux_android {
         }
 
         // If EA is supported, then no error should occur
-        assert!(res.is_ok());
+        res.unwrap();
 
         assert_eq!(
             "test_fgetxattr".as_bytes(),
             &fgetxattr(temp_file_fd, "user.test_fgetxattr").unwrap()
         );
+    }
+
+    #[test]
+    fn test_lgetxttr() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path = temp_dir.path().join("test_lgetxattr");
+        File::create(temp_file_path.as_path()).unwrap();
+        let temp_link_path = super::create_link(temp_file_path.as_path());
+
+        let res = lgetxattr(temp_link_path, "user.test_lgetxattr_ea_not_exist");
+
+        match res {
+            // EA is not supported, skip the test.
+            Err(Errno(libc::ENOTSUP)) => {}
+            // EA does not exist, returns `ENODATA`
+            _ => assert_eq!(res, Err(Errno(libc::ENODATA))),
+        }
     }
 
     #[test]
@@ -290,7 +361,7 @@ mod linux_android {
         }
 
         // If EA is supported, then no error should occur
-        assert!(res.is_ok());
+        res.unwrap();
 
         assert!(removexattr(
             temp_file_path.as_path(),
@@ -352,9 +423,27 @@ mod linux_android {
         }
 
         // If EA is supported, then no error should occur
-        assert!(res.is_ok());
+        res.unwrap();
 
         assert!(fremovexattr(temp_file_fd, "user.test_fremovexattr").is_ok());
+    }
+
+    #[test]
+    fn test_lremovexattr() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path = temp_dir.path().join("test_lremovexattr");
+        File::create(temp_file_path.as_path()).unwrap();
+        let temp_link_path = super::create_link(temp_file_path.as_path());
+
+        let res =
+            lremovexattr(temp_link_path, "user.test_lremovexattr_ea_not_exist");
+
+        match res {
+            // If EA is supported, then no error should occur
+            Err(Errno(libc::ENOTSUP)) => {}
+            // Trying to remove a user EA on symlink is not permitted.
+            _ => assert_eq!(res, Err(Errno(libc::EPERM))),
+        }
     }
 }
 
@@ -363,9 +452,10 @@ mod linux_android {
 mod freebsd {
     use errno::Errno;
     use extattr::{
-        extattr_delete_fd, extattr_delete_file, extattr_get_fd,
-        extattr_get_file, extattr_list_fd, extattr_list_file, extattr_set_fd,
-        extattr_set_file, AttrNamespace,
+        extattr_delete_fd, extattr_delete_file, extattr_delete_link,
+        extattr_get_fd, extattr_get_file, extattr_get_link, extattr_list_fd,
+        extattr_list_file, extattr_list_link, extattr_set_fd, extattr_set_file,
+        extattr_set_link, AttrNamespace,
     };
     use std::{fs::File, os::unix::io::AsRawFd};
 
@@ -419,6 +509,22 @@ mod freebsd {
     }
 
     #[test]
+    fn test_extattr_set_link() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path = temp_dir.path().join("test_extattr_set_link");
+        let temp_file = File::create(temp_file_path.as_path()).unwrap();
+        let temp_link_path = super::create_link(temp_file_path.as_path());
+
+        extattr_set_link(
+            temp_link_path.as_path(),
+            AttrNamespace::EXTATTR_NAMESPACE_USER,
+            "test_extattr_set_link",
+            "test_extattr_set_link",
+        )
+        .unwrap();
+    }
+
+    #[test]
     fn test_extattr_list_file() {
         let temp_dir = tempfile::tempdir_in("./").unwrap();
         let temp_file_path = temp_dir.path().join("test_extattr_list_file");
@@ -461,6 +567,29 @@ mod freebsd {
         )
         .unwrap()
         .contains(&(String::from("test_extattr_list_fd").into())));
+    }
+
+    #[test]
+    fn test_extattr_list_link() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path = temp_dir.path().join("test_extattr_list_link");
+        let temp_file = File::create(temp_file_path.as_path()).unwrap();
+        let temp_link_path = super::create_link(temp_file_path.as_path());
+
+        extattr_set_link(
+            temp_link_path.as_path(),
+            AttrNamespace::EXTATTR_NAMESPACE_USER,
+            "test_extattr_list_link",
+            "test_extattr_list_link",
+        )
+        .unwrap();
+
+        assert!(extattr_list_link(
+            temp_link_path.as_path(),
+            AttrNamespace::EXTATTR_NAMESPACE_USER
+        )
+        .unwrap()
+        .contains(&(String::from("test_extattr_list_link").into())));
     }
 
     #[test]
@@ -509,6 +638,32 @@ mod freebsd {
                 temp_file_fd,
                 AttrNamespace::EXTATTR_NAMESPACE_USER,
                 "test_extattr_get_fd",
+            )
+            .unwrap()
+        );
+    }
+
+    #[test]
+    fn test_extattr_get_link() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path = temp_dir.path().join("test_extattr_get_link");
+        let temp_file = File::create(temp_file_path.as_path()).unwrap();
+        let temp_link_path = super::create_link(temp_file_path.as_path());
+
+        extattr_set_link(
+            temp_link_path.as_path(),
+            AttrNamespace::EXTATTR_NAMESPACE_USER,
+            "test_extattr_get_link",
+            "test_extattr_get_link",
+        )
+        .unwrap();
+
+        assert_eq!(
+            "test_extattr_get_link".as_bytes(),
+            extattr_get_link(
+                temp_link_path.as_path(),
+                AttrNamespace::EXTATTR_NAMESPACE_USER,
+                "test_extattr_get_link",
             )
             .unwrap()
         );
@@ -587,12 +742,35 @@ mod freebsd {
         )
         .unwrap();
 
-        assert!(extattr_delete_fd(
+        extattr_delete_fd(
             temp_file_fd,
             AttrNamespace::EXTATTR_NAMESPACE_USER,
             "test_extattr_delete_fd",
         )
-        .is_ok());
+        .unwrap();
+    }
+
+    #[test]
+    fn test_extattr_delete_link() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path = temp_dir.path().join("test_extattr_delete_link");
+        let temp_file = File::create(temp_file_path.as_path()).unwrap();
+        let temp_link_path = super::create_link(temp_file_path.as_path());
+
+        extattr_set_link(
+            temp_link_path.as_path(),
+            AttrNamespace::EXTATTR_NAMESPACE_USER,
+            "test_extattr_delete_link",
+            "test_extattr_delete_link",
+        )
+        .unwrap();
+
+        extattr_delete_link(
+            temp_link_path.as_path(),
+            AttrNamespace::EXTATTR_NAMESPACE_USER,
+            "test_extattr_delete_link",
+        )
+        .unwrap();
     }
 }
 
@@ -624,7 +802,7 @@ mod test_darwin {
             // The underlying file system does not support EA, skip this test.
             Err(Errno(libc::ENOTSUP)) => {}
             // If EA is supported, then no error should occur
-            _ => assert!(res.is_ok()),
+            _ => res.unwrap(),
         }
     }
 
@@ -641,6 +819,11 @@ mod test_darwin {
             0,
             Options::empty(),
         );
+
+        // EA is not supported on the underlying file system, skip the test.
+        if let Err(Errno(libc::ENOTSUP)) = res {
+            return;
+        }
 
         assert_eq!(res, Err(Errno(libc::ENOENT)));
     }
@@ -665,6 +848,7 @@ mod test_darwin {
         if let Err(Errno(libc::ENOTSUP)) = res_set {
             return;
         }
+        res_set.unwrap();
 
         // Then try to set it again, with `XATTR_CREATE` flag
         let res = setxattr(
@@ -720,7 +904,31 @@ mod test_darwin {
             // The underlying file system does not support EA, skip this test.
             Err(Errno(libc::ENOTSUP)) => {}
             // If EA is supported, then no error should occur
-            _ => assert!(res.is_ok()),
+            _ => res.unwrap(),
+        }
+    }
+
+    #[test]
+    fn test_setxattr_xattr_no_follow() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path =
+            temp_dir.path().join("test_setxattr_xattr_no_follow");
+        File::create(temp_file_path.as_path()).unwrap();
+        let temp_link_path = super::create_link(temp_file_path.as_path());
+
+        let res = setxattr(
+            temp_link_path.as_path(),
+            "user.test_setxattr_xattr_no_follow",
+            "test_setxattr_xattr_no_follow",
+            0,
+            Options::XATTR_NOFOLLOW,
+        );
+
+        match res {
+            // The underlying file system does not support EA, skip this test.
+            Err(Errno(libc::ENOTSUP)) => {}
+            // If EA is supported, then no error should occur
+            _ => res.unwrap(),
         }
     }
 
@@ -730,25 +938,23 @@ mod test_darwin {
         let temp_file_path = temp_dir.path().join("test_listxattr");
         File::create(temp_file_path.as_path()).unwrap();
 
-        setxattr(
+        let res = setxattr(
             temp_file_path.as_path(),
             "user.test_listxattr",
             "test_listxattr",
             0,
             Options::empty(),
-        )
-        .unwrap();
+        );
 
-        let res = listxattr(temp_file_path.as_path(), Options::empty());
-
-        match res {
-            // The underlying file system does not support EA, skip this test.
-            Err(Errno(libc::ENOTSUP)) => {}
-            // If EA is supported, then no error should occur
-            _ => assert!(res
-                .unwrap()
-                .contains(&(String::from("user.test_listxattr").into()))),
+        // The underlying file system does not support EA, skip this test.
+        if let Err(Errno(libc::ENOTSUP)) = res {
+            return;
         }
+        res.unwrap();
+
+        assert!(listxattr(temp_file_path.as_path(), Options::empty())
+            .unwrap()
+            .contains(&(String::from("user.test_listxattr").into())));
     }
 
     #[test]
@@ -758,25 +964,50 @@ mod test_darwin {
         let temp_file = File::create(temp_file_path.as_path()).unwrap();
         let temp_file_fd = temp_file.as_raw_fd();
 
-        setxattr(
+        let res = setxattr(
             temp_file_path.as_path(),
             "user.test_flistxattr",
             "test_flistxattr",
             0,
             Options::empty(),
-        )
-        .unwrap();
+        );
 
-        let res = flistxattr(temp_file_fd, Options::empty());
-
-        match res {
-            // The underlying file system does not support EA, skip this test.
-            Err(Errno(libc::ENOTSUP)) => {}
-            // If EA is supported, then no error should occur
-            _ => assert!(res
-                .unwrap()
-                .contains(&(String::from("user.test_flistxattr").into()))),
+        // The underlying file system does not support EA, skip this test.
+        if let Err(Errno(libc::ENOTSUP)) = res {
+            return;
         }
+        res.unwrap();
+
+        assert!(flistxattr(temp_file_fd, Options::empty())
+            .unwrap()
+            .contains(&(String::from("user.test_flistxattr").into())));
+    }
+
+    #[test]
+    fn test_listxattr_xattr_no_follow() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path =
+            temp_dir.path().join("test_listxattr_xattr_no_follow");
+        File::create(temp_file_path.as_path()).unwrap();
+        let temp_link_path = super::create_link(temp_file_path.as_path());
+
+        let res = setxattr(
+            temp_link_path.as_path(),
+            "user.test_listxattr_xattr_no_follow",
+            "test_listxattr_no_follow",
+            0,
+            Options::XATTR_NOFOLLOW,
+        );
+
+        // The underlying file system does not support EA, skip this test.
+        if let Err(Errno(libc::ENOTSUP)) = res {
+            return;
+        }
+        res.unwrap();
+
+        assert!(listxattr(temp_link_path.as_path(), Options::XATTR_NOFOLLOW)
+            .unwrap()
+            .contains(&(String::from("user.test_listxattr_xattr_no_follow").into())));
     }
 
     #[test]
@@ -797,9 +1028,8 @@ mod test_darwin {
         if let Err(Errno(libc::ENOTSUP)) = res {
             return;
         }
-
         // If EA is supported, then no error should occur
-        assert!(res.is_ok());
+        res.unwrap();
 
         assert_eq!(
             "test_getxattr".as_bytes(),
@@ -856,12 +1086,46 @@ mod test_darwin {
         }
 
         // If EA is supported, then no error should occur
-        assert!(res.is_ok());
+        res.unwrap();
 
         assert_eq!(
             "test_fgetxattr".as_bytes(),
             fgetxattr(temp_file_fd, "user.test_fgetxattr", 0, Options::empty())
                 .unwrap()
+        );
+    }
+
+    #[test]
+    fn test_getxattr_xattr_no_follow() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path = temp_dir.path().join("test_getxattr");
+        File::create(temp_file_path.as_path()).unwrap();
+        let temp_link_path = super::create_link(temp_file_path.as_path());
+
+        let res = setxattr(
+            temp_link_path.as_path(),
+            "user.test_getxattr_xattr_no_follow",
+            "test_getxattr_xattr_no_follow",
+            0,
+            Options::XATTR_NOFOLLOW,
+        );
+
+        // The underlying file system does not support EA, skip this test.
+        if let Err(Errno(libc::ENOTSUP)) = res {
+            return;
+        }
+        // If EA is supported, then no error should occur
+        res.unwrap();
+
+        assert_eq!(
+            "test_getxattr_xattr_no_follow".as_bytes(),
+            getxattr(
+                temp_link_path.as_path(),
+                "user.test_getxattr_xattr_no_follow",
+                0,
+                Options::XATTR_NOFOLLOW,
+            )
+            .unwrap(),
         );
     }
 
@@ -885,7 +1149,7 @@ mod test_darwin {
         }
 
         // If EA is supported, then no error should occur
-        assert!(res.is_ok());
+        res.unwrap();
 
         assert!(removexattr(
             temp_file_path.as_path(),
@@ -949,12 +1213,44 @@ mod test_darwin {
         }
 
         // If EA is supported, then no error should occur
-        assert!(res.is_ok());
+        res.unwrap();
 
         assert!(fremovexattr(
             temp_file_fd,
             "user.test_fremovexattr",
             Options::empty(),
+        )
+        .is_ok());
+    }
+
+    #[test]
+    fn test_removexattr_xattr_no_follow() {
+        let temp_dir = tempfile::tempdir_in("./").unwrap();
+        let temp_file_path =
+            temp_dir.path().join("test_removexattr_xattr_no_follow");
+        File::create(temp_file_path.as_path()).unwrap();
+        let temp_link_path = super::create_link(temp_file_path.as_path());
+
+        let res = setxattr(
+            temp_link_path.as_path(),
+            "user.test_removexattr_xattr_no_follow",
+            "test_removexattr_xattr_no_follow",
+            0,
+            Options::XATTR_NOFOLLOW,
+        );
+
+        // The underlying file system does not support EA, skip this test.
+        if let Err(Errno(libc::ENOTSUP)) = res {
+            return;
+        }
+
+        // If EA is supported, then no error should occur
+        res.unwrap();
+
+        assert!(removexattr(
+            temp_link_path.as_path(),
+            "user.test_removexattr_xattr_no_follow",
+            Options::XATTR_NOFOLLOW,
         )
         .is_ok());
     }

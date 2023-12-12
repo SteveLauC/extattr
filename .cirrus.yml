@@ -1,7 +1,7 @@
 task:
-  name: stable x86_64-unknown-freebsd-12
+  name: stable x86_64-unknown-freebsd-14
   freebsd_instance:
-    image: freebsd-14-0-snap
+    image_family: freebsd-14-0-snap
   sysinfo_script:
     - id
     - uname -a
@@ -18,7 +18,7 @@ task:
 task:
   name: stable x86_64-unknown-freebsd-13
   freebsd_instance:
-    image: freebsd-13-2
+    image_family: freebsd-13-2
   sysinfo_script:
     - id
     - uname -a

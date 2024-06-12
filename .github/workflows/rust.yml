@@ -11,8 +11,19 @@ env:
 
 jobs:
   x86_64-unknown-linux-gnu:
-
     runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Format check
+      run: cargo fmt --all -- --check
+    - name: Clippy
+      run: cargo clippy --verbose
+    - name: Run tests
+      run: cargo test --verbose
+
+  macOS-aarch64:
+    runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@v3

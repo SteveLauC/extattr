@@ -1,7 +1,7 @@
 task:
   name: stable x86_64-unknown-freebsd-14
   freebsd_instance:
-    image_family: freebsd-14-0-snap
+    image: freebsd-14-1-release-amd64-ufs
   sysinfo_script:
     - id
     - uname -a
@@ -18,28 +18,12 @@ task:
 task:
   name: stable x86_64-unknown-freebsd-13
   freebsd_instance:
-    image_family: freebsd-13-2
+    image_family: freebsd-13-3
   sysinfo_script:
     - id
     - uname -a
   setup_script:
     - pkg install -y curl
-    - curl https://sh.rustup.rs -sSf --output rustup.sh
-    - sh rustup.sh -y
-    - . $HOME/.cargo/env
-  test_script:
-    - . $HOME/.cargo/env
-    - cargo clippy --verbose
-    - cargo test --verbose
-
-task:
-  name: stable aarch64-apple-darwin
-  macos_instance:
-    image: ghcr.io/cirruslabs/macos-ventura-base:latest
-  sysinfo_script:
-    - id
-    - uname -a
-  setup_script:
     - curl https://sh.rustup.rs -sSf --output rustup.sh
     - sh rustup.sh -y
     - . $HOME/.cargo/env

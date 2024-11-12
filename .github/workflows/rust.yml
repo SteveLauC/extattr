@@ -7,10 +7,11 @@ on:
     branches: [ main ]
 
 env:
+  MSRV: 1.56.1
   CARGO_TERM_COLOR: always
 
 jobs:
-  x86_64-unknown-linux-gnu:
+  x86_64-unknown-linux-gnu-latest-stable:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,7 +23,7 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
 
-  macOS-aarch64:
+  macOS-aarch64-latest-stable:
     runs-on: macos-latest
 
     steps:
@@ -31,5 +32,41 @@ jobs:
       run: cargo fmt --all -- --check
     - name: Clippy
       run: cargo clippy --verbose
+    - name: Run tests
+      run: cargo test --verbose
+
+  x86_64-unknown-linux-gnu-MSRV:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up MSRV Rust
+      run: rustup toolchain install '${{ env.MSRV }}'
+
+    - name: Format check
+      run: cargo fmt --all -- --check
+
+    - name: Clippy
+      run: cargo clippy --verbose
+
+    - name: Run tests
+      run: cargo test --verbose
+
+  macOS-aarch64-MSRV:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up MSRV Rust
+      run: rustup toolchain install '${{ env.MSRV }}'
+
+    - name: Format check
+      run: cargo fmt --all -- --check
+
+    - name: Clippy
+      run: cargo clippy --verbose
+
     - name: Run tests
       run: cargo test --verbose

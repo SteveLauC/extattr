@@ -1,7 +1,28 @@
+env:
+  MSRV: 1.56.1
+
 task:
-  name: stable x86_64-unknown-freebsd-14
+  name: latest-stable x86_64-unknown-freebsd-14
   freebsd_instance:
     image: freebsd-14-1-release-amd64-ufs
+  sysinfo_script:
+    - id
+    - uname -a
+  setup_script:
+    - pkg install -y curl
+    - curl https://sh.rustup.rs -sSf --output rustup.sh
+    - sh rustup.sh -y
+    - . $HOME/.cargo/env
+  test_script:
+    - . $HOME/.cargo/env
+
+    - cargo clippy --verbose
+    - cargo test --verbose
+
+task:
+  name: latest-stable x86_64-unknown-freebsd-13
+  freebsd_instance:
+    image_family: freebsd-13-3
   sysinfo_script:
     - id
     - uname -a
@@ -16,7 +37,25 @@ task:
     - cargo test --verbose
 
 task:
-  name: stable x86_64-unknown-freebsd-13
+  name: MSRV x86_64-unknown-freebsd-14
+  freebsd_instance:
+    image: freebsd-14-1-release-amd64-ufs
+  sysinfo_script:
+    - id
+    - uname -a
+  setup_script:
+    - pkg install -y curl
+    - curl https://sh.rustup.rs -sSf --output rustup.sh
+    - sh rustup.sh -y --default-toolchain $MSRV
+    - . $HOME/.cargo/env
+  test_script:
+    - . $HOME/.cargo/env
+
+    - cargo clippy --verbose
+    - cargo test --verbose
+
+task:
+  name: MSRV x86_64-unknown-freebsd-13
   freebsd_instance:
     image_family: freebsd-13-3
   sysinfo_script:
@@ -25,7 +64,7 @@ task:
   setup_script:
     - pkg install -y curl
     - curl https://sh.rustup.rs -sSf --output rustup.sh
-    - sh rustup.sh -y
+    - sh rustup.sh -y --default-toolchain $MSRV
     - . $HOME/.cargo/env
   test_script:
     - . $HOME/.cargo/env
